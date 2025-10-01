@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User{% endblock %}
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+  
+  <main class="main-content">
+    <div class="header-actions">
+      <a href="{{ url_for('admin.manage_users') }}" class="btn-back">← Kembali</a>
+    </div>
+
+    <h2>Edit User</h2>
+    <form method="POST">
+      <input type="text" name="username" value="{{ user.name }}" required>
+      <input type="email" name="email" value="{{ user.email }}" required>
+
+      <!-- Password opsional -->
+      <input type="password" name="password" placeholder="Password baru (kosongkan jika tidak diubah)">
+
+      <select name="role">
+        <option value="admin" {% if user.role == "admin" %}selected{% endif %}>Admin</option>
+        <option value="cashier" {% if user.role == "cashier" %}selected{% endif %}>Cashier</option>
+        <option value="waiter" {% if user.role == "waiter" %}selected{% endif %}>Waiter</option>
+      </select>
+
+      <button type="submit">Simpan</button>
+    </form>
+  </main>
+</div>
+{% endblock %}

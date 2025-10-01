@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Keranjang Belanja</h2>
+{% if cart %}
+  <form method="post" action="{{ url_for('update_cart') }}">
+    <table>
+      <tr><th>Menu</th><th>Harga</th><th>Jumlah</th><th>Total</th><th>Aksi</th></tr>
+      {% for item in cart %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>Rp {{ "%.0f"|format(item.price) }}</td>
+        <td>
+          <input type="number" name="qty_{{ item.id }}" value="{{ item.qty }}" min="1">
+        </td>
+        <td>Rp {{ "%.0f"|format(item.price * item.qty) }}</td>
+        <td><a href="{{ url_for('remove_from_cart', item_id=item.id) }}">Hapus</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+    <p><strong>Total: Rp {{ "%.0f"|format(total) }}</strong></p>
+
+    <!-- Tombol sejajar -->
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button type="submit">Update Keranjang</button>
+      <a href="{{ url_for('checkout') }}">
+        <button type="button">Checkout</button>
+      </a>
+    </div>
+  </form>
+{% else %}
+  <p>Keranjang kosong.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Tambah User{% endblock %}
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+  
+  <main class="main-content">
+    <div class="header-actions">
+      <a href="{{ url_for('admin.manage_users') }}" class="btn-back">← Kembali</a>
+    </div>
+
+    <h2>Tambah User</h2>
+    <form method="POST">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <select name="role">
+        <option value="admin">Admin</option>
+        <option value="cashier">Cashier</option>
+        <option value="waiter">Waiter</option>
+      </select>
+      <button type="submit">Tambah</button>
+    </form>
+  </main>
+</div>
+{% endblock %}

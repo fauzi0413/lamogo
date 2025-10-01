@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Management User{% endblock %}
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+
+  <main class="main-content">
+    <div class="header-actions">
+      <h2>Management User</h2>
+      <a href="{{ url_for('admin.add_user') }}" class="btn">Tambah User</a>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.role }}</td>
+          <td>
+            <a href="{{ url_for('admin.edit_user', user_id=user.id) }}">Edit</a> |
+            <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" 
+               class="delete-user-btn" data-name="{{ user.name }}">
+              Hapus
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+</div>
+
+<!-- SweetAlert untuk hapus -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".delete-user-btn").forEach(btn => {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      const url = this.getAttribute("href");
+      const userName = this.dataset.name;
+
+      Swal.fire({
+        title: 'Yakin hapus?',
+        text: `Apakah Anda yakin ingin menghapus user "${userName}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

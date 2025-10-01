@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Management Menu{% endblock %}
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+
+  <main class="main-content">
+    <div class="header-actions">
+      <h2>Management Menu</h2>
+      <a href="{{ url_for('admin.add_menu') }}" class="btn">Tambah Menu</a>
+    </div>
+
+    <!-- Tabel Menu -->
+    <table>
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Deskripsi</th>
+          <th>Harga</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.description }}</td>
+          <td>Rp {{ "%.0f"|format(item.price) }}</td>
+          <td>
+            <a href="{{ url_for('admin.edit_menu', item_id=item.id) }}">Edit</a> |
+            <a href="{{ url_for('admin.delete_menu', item_id=item.id) }}" 
+              class="delete-btn" 
+              data-name="{{ item.name }}">
+              Hapus
+            </a> |
+            <a href="#" class="detail-btn" 
+              data-name="{{ item.name }}"
+              data-description="{{ item.description }}"
+              data-price="Rp {{ '%.0f'|format(item.price) }}"
+              data-image="{{ url_for('static', filename='img/' + item.image) if item.image else url_for('static', filename='img/placeholder.png') }}">
+              Detail
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+
+  <!-- JavaScript untuk konfirmasi hapus -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Konfirmasi hapus dengan SweetAlert
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          const url = this.getAttribute("href");
+          const menuName = this.dataset.name;
+
+          Swal.fire({
+            title: 'Yakin hapus?',
+            text: `Apakah Anda yakin ingin menghapus menu "${menuName}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = url;
+            }
+          });
+        });
+      });
+
+      // Modal detail
+      const modal = document.getElementById("detailModal");
+      const closeBtn = modal.querySelector(".close");
+
+      document.querySelectorAll(".detail-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          document.getElementById("modalName").innerText = this.dataset.name;
+          document.getElementById("modalDescription").innerText = this.dataset.description;
+          document.getElementById("modalPrice").innerText = this.dataset.price;
+          document.getElementById("modalImage").src = this.dataset.image;
+          modal.style.display = "block";
+        });
+      });
+
+      closeBtn.addEventListener("click", () => modal.style.display = "none");
+      window.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+      });
+    });
+  </script>
+  
+  <!-- JavaScript untuk modal detail -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const modal = document.getElementById("detailModal");
+      const closeBtn = modal.querySelector(".close");
+
+      document.querySelectorAll(".detail-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          document.getElementById("modalName").innerText = this.dataset.name;
+          document.getElementById("modalDescription").innerText = this.dataset.description;
+          document.getElementById("modalPrice").innerText = this.dataset.price;
+          document.getElementById("modalImage").src = this.dataset.image;
+          modal.style.display = "block";
+        });
+      });
+
+      closeBtn.addEventListener("click", () => modal.style.display = "none");
+      window.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+      });
+    });
+    </script>
+     
+</div>
+
+<!-- Modal -->
+<div id="detailModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3 id="modalName"></h3>
+    <img id="modalImage" src="{{ url_for('static', filename='img/placeholder.png') }}" alt="Gambar Menu" width="200">
+    <p id="modalDescription"></p>
+    <p id="modalPrice"></p>
+  </div>
+</div>
+
+{% endblock %}

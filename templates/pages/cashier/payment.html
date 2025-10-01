@@ -1,0 +1,86 @@
+{% extends "base.html" %} 
+{% block content %}
+<h2 style="text-align:center; margin-bottom:20px;">💳 Pembayaran</h2>
+
+<div class="payment-card">
+  <p><strong>ID Pesanan:</strong> {{ order.id }}</p>
+  <p><strong>Total:</strong> Rp {{ "%.0f"|format(order.total) }}</p>
+
+  <form method="post">
+    <h3>Pilih Metode Pembayaran:</h3>
+    <div class="payment-options">
+      <label><input type="radio" name="payment_method" value="Cash" required> Cash</label>
+      <label><input type="radio" name="payment_method" value="Transfer Bank"> Transfer Bank</label>
+      <label><input type="radio" name="payment_method" value="QRIS" onclick="showQR()"> QRIS</label>
+      <label><input type="radio" name="payment_method" value="E-Wallet"> E-Wallet (Dana/OVO/Gopay)</label>
+    </div>
+
+    <!-- QRIS Image (hidden dulu) -->
+    <div id="qris-box" class="qris-box">
+      <p>Silakan scan QRIS untuk membayar:</p>
+      <img src="{{ url_for('static', filename='img/qrish.png') }}" 
+           alt="QRIS Code">
+    </div>
+
+    <div style="text-align:center; margin-top:20px;">
+      <button type="submit">✅ Konfirmasi Pembayaran</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function showQR() {
+    document.getElementById("qris-box").style.display = "block";
+  }
+</script>
+
+<style>
+  .payment-card {
+    max-width: 450px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .payment-card h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  .payment-options {
+    margin: 15px 0 20px 0;
+  }
+  .payment-options label {
+    display: block;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-size: 15px;
+  }
+  .qris-box {
+    display: none;
+    margin: 15px auto;
+    text-align: center;
+    background: #f9f9f9;
+    border: 2px dashed #ccc;
+    padding: 15px;
+    border-radius: 10px;
+  }
+  .qris-box img {
+    max-width: 200px;
+    border-radius: 10px;
+    margin-top: 10px;
+  }
+  button {
+    padding: 12px 25px;
+    background: #28a745;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #218838;
+  }
+</style>
+{% endblock %}

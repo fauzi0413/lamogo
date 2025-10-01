@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Tambah Menu{% endblock %}
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+  <main class="main-content">
+    <div class="header-actions">
+      <a href="{{ url_for('admin.manage_menu') }}" class="btn-back">← Kembali</a>
+    </div>
+
+    <h2>Tambah Menu</h2>
+    <form method="POST" enctype="multipart/form-data">
+      <input type="text" name="name" placeholder="Nama Menu" required>
+      <input type="text" name="description" placeholder="Deskripsi">
+      <input type="number" name="price" placeholder="Harga" required>
+
+      <div class="image-input">
+        <img id="preview" src="{{ url_for('static', filename='img/placeholder.png') }}" width="120">
+        <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+      </div>
+
+      <button type="submit">Tambah</button>
+    </form>
+  </main>
+</div>
+
+<script>
+function previewImage(event) {
+  const reader = new FileReader();
+  reader.onload = function() {
+    document.getElementById('preview').src = reader.result;
+  }
+  reader.readAsDataURL(event.target.files[0]);
+}
+</script>
+{% endblock %}

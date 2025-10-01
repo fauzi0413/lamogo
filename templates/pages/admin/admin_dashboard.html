@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Admin{% endblock %}
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+
+  <main class="main-content">
+    <h2>Dashboard Admin</h2>
+
+    <div class="stats">
+      <div class="card">
+        <h3>Total Pesanan</h3>
+        <p>{{ total_orders }}</p>
+      </div>
+      <div class="card">
+        <h3>Total Penjualan</h3>
+        <p>Rp {{ "%.0f"|format(total_sales) }}</p>
+      </div>
+      <div class="card">
+        <h3>Total User</h3>
+        <p>{{ total_users }}</p>
+      </div>
+      <div class="card">
+        <h3>Total Menu</h3>
+        <p>{{ total_menu }}</p>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

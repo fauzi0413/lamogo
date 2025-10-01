@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-text">
+    <h2>Selamat Datang di <span class="brand">LAMOGO</span></h2>
+    <p>Nikmati hidangan khas Lamongan secara online</p>
+    <a href="{{ url_for('index') }}#menu" class="btn btn-lg">Lihat Menu</a>
+  </div>
+</section>
+
+<!-- Highlight Section -->
+<section class="highlight">
+  <h3>Kenapa Pesan di LAMOGO?</h3>
+  <div class="highlight-cards">
+    <div class="h-card">
+      <img src="{{ url_for('static', filename='icons/fast.svg') }}" alt="Cepat">
+      <h4>Cepat</h4>
+      <p>Pesan online, makanan langsung diproses tanpa ribet.</p>
+    </div>
+    <div class="h-card">
+      <img src="{{ url_for('static', filename='icons/tasty.svg') }}" alt="Lezat">
+      <h4>Lezat</h4>
+      <p>Resep khas Lamongan dengan cita rasa autentik.</p>
+    </div>
+    <div class="h-card">
+      <img src="{{ url_for('static', filename='icons/secure.svg') }}" alt="Aman">
+      <h4>Aman</h4>
+      <p>Pembayaran aman, data customer terlindungi.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Menu Section -->
+<section id="menu" class="menu-section">
+  <h3>Menu Favorit</h3>
+  <div class="menu-grid">
+    {% for item in menu %}
+    <div class="menu-card">
+      <img src="{{ url_for('static', filename='img/' ~ item['image']) }}" alt="{{ item['name'] }}">
+      <div class="menu-info">
+        <h4>{{ item['name'] }}</h4>
+        <p>{{ item['description'] }}</p>
+        <p class="price">Rp {{ "%.0f"|format(item['price']) }}</p>
+
+        <form method="post" action="{{ url_for('add_to_cart', item_id=item['id']) }}">
+          <div class="order-controls">
+            <input type="number" name="qty" value="1" min="1">
+            <button type="submit">Tambah</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+
+<!-- Call to Action -->
+<section class="cta">
+  <h3>Siap memesan?</h3>
+  <a href="{{ url_for('index') }}#menu" class="btn btn-lg">Pesan Sekarang</a>
+</section>
+
+{% endblock %}

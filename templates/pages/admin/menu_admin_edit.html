@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Menu{% endblock %}
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+  <main class="main-content">
+    <div class="header-actions">
+      <a href="{{ url_for('admin.manage_menu') }}" class="btn-back">← Kembali</a>
+    </div>
+
+    <h2>Edit Menu</h2>
+    <form method="POST" enctype="multipart/form-data">
+      <input type="text" name="name" value="{{ item.name }}" required>
+      <input type="text" name="description" value="{{ item.description }}">
+      <input type="number" name="price" value="{{ "%.0f"|format(item.price) }}" required>
+
+      <div class="image-input">
+        <img id="preview" src="{{ url_for('static', filename='img/' + item.image) if item.image else url_for('static', filename='img/placeholder.png') }}" width="120">
+        <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+      </div>
+
+      <button type="submit">Simpan</button>
+    </form>
+  </main>
+</div>
+
+<script>
+function previewImage(event) {
+  const reader = new FileReader();
+  reader.onload = function() {
+    document.getElementById('preview').src = reader.result;
+  }
+  reader.readAsDataURL(event.target.files[0]);
+}
+</script>
+{% endblock %}

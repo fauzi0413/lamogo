@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Daftar Menu{% endblock %}
+{% block content %}
+<div class="main-container">
+    <h2>Daftar Menu</h2>
+
+    <div class="menu-list">
+        {% for item in menu %}
+        <div class="card">
+            <img src="{{ url_for('static', filename='img/' + (item.image if item.image else 'placeholder.png')) }}" alt="{{ item.name }}">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description }}</p>
+            <p class="price">Rp {{ "%.0f"|format(item.price) }}</p>
+
+            {% if current_user.is_authenticated and current_user.role == "cashier" %}
+            <form action="{{ url_for('cashier.add_to_cart') }}" method="post">
+                <input type="hidden" name="menu_id" value="{{ item.id }}">
+                <input type="number" name="quantity" min="1" value="1">
+                <button type="submit" class="btn">Pesan</button>
+            </form>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Riwayat Pesanan{% endblock %}
+
+{% block content %}
+<div class="main-container">
+  <h2>Riwayat Pesanan</h2>
+
+  {% if orders %}
+  <ul class="list-group">
+    {% for order in orders %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+          #{{ order.id }} - {{ order.customer_name }}  
+          (Rp {{ "%.0f"|format(order.total) }})
+        </span>
+        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#orderModal{{ order.id }}">
+          Detail
+        </button>
+      </li>
+
+      <!-- Modal -->
+      <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Detail Pesanan #{{ order.id }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Nama:</strong> {{ order.customer_name }}</p>
+              <p><strong>No. HP:</strong> {{ order.customer_phone }}</p>
+              <p><strong>Total:</strong> Rp {{ "%.0f"|format(order.total) }}</p>
+
+              <h6>Item Pesanan</h6>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Menu</th>
+                    <th>Qty</th>
+                    <th>Harga</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in order.items %}
+                  <tr>
+                    <td>{{ item.menu_item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>Rp {{ "%.0f"|format(item.menu_item.price) }}</td>
+                    <td>Rp {{ "%.0f"|format(item.menu_item.price * item.quantity) }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>Belum ada pesanan.</p>
+  {% endif %}
+</div>
+{% endblock %}
