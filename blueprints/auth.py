@@ -14,12 +14,17 @@ def login():
             login_user(user)
             flash("Login berhasil", "success")
 
-            # 🔥 Arahkan sesuai role (pakai string)
+            # 🔥 Arahkan sesuai role
             if user.role == "admin":
                 return redirect(url_for("admin.dashboard"))
             elif user.role == "cashier":
                 return redirect(url_for("cashier.dashboard"))
+            elif user.role == "waiter":
+                return redirect(url_for("waiter.dashboard"))   # ➝ buat nanti
+            elif user.role == "kitchen":
+                return redirect(url_for("kitchen.dashboard")) # ➝ buat nanti
             else:
+                flash("Role tidak dikenali", "danger")
                 return redirect(url_for("auth.login"))
 
         flash("Email atau password salah", "danger")

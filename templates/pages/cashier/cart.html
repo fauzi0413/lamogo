@@ -1,33 +1,202 @@
 {% extends "base.html" %}
-{% block content %}
-<h2>Keranjang Belanja</h2>
-{% if cart %}
-  <form method="post" action="{{ url_for('update_cart') }}">
-    <table>
-      <tr><th>Menu</th><th>Harga</th><th>Jumlah</th><th>Total</th><th>Aksi</th></tr>
-      {% for item in cart %}
-      <tr>
-        <td>{{ item.name }}</td>
-        <td>Rp {{ "%.0f"|format(item.price) }}</td>
-        <td>
-          <input type="number" name="qty_{{ item.id }}" value="{{ item.qty }}" min="1">
-        </td>
-        <td>Rp {{ "%.0f"|format(item.price * item.qty) }}</td>
-        <td><a href="{{ url_for('remove_from_cart', item_id=item.id) }}">Hapus</a></td>
-      </tr>
-      {% endfor %}
-    </table>
-    <p><strong>Total: Rp {{ "%.0f"|format(total) }}</strong></p>
+{% block title %}Keranjang Belanja{% endblock %}
 
-    <!-- Tombol sejajar -->
-    <div style="display:flex; gap:10px; margin-top:10px;">
+{% block content %}
+<div class="main-container">
+  <h2>Keranjang Belanja</h2>
+  {% if items %}
+    <!-- Form update cart -->
+    <form method="post" action="{{ url_for('cashier.update_cart') }}">
+      <table>
+        <tr><th>Menu</th><th>Harga</th><th>Jumlah</th><th>Total</th><th>Aksi</th></tr>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td> {{ item.price|rupiah }}</td>
+            <td>
+              <input type="number" name="qty_{{ item.id }}" value="{{ item.qty }}" min="1">
+            </td>
+            <td>{{ (item.price * item.qty)|rupiah }}</td>
+            <td>
+              <a href="{{ url_for('cashier.remove_from_cart', item_id=item.id) }}">Hapus</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+
+      <p><strong>Total: {{ total|rupiah }}</strong></p>
+
       <button type="submit">Update Keranjang</button>
-      <a href="{{ url_for('checkout') }}">
-        <button type="button">Checkout</button>
-      </a>
+    </form>
+
+    <!-- Form checkout terpisah -->
+    <form method="post" action="{{ url_for('cashier.checkout') }}" id="checkoutForm" style="margin-top:10px;">
+      <div class="mb-3">
+        <input type="text" name="customer_name" placeholder="Nama Customer" required>
+      </div>
+      <div class="mb-3">
+        <input type="text" name="customer_phone" placeholder="No. HP" required>
+      </div>
+      <div class="mb-3">
+        <label>Metode Pembayaran</label>
+        <select name="payment_method" id="paymentMethod" class="form-select" required>
+          <option value="cash">Cash</option>
+          <option value="qris">QRIS</option>
+        </select>
+      </div>
+
+      <!-- Input hidden untuk dikirim -->
+      <input type="hidden" name="amount_paid" id="amountPaid">
+      <input type="hidden" name="change_due" id="changeDue">
+
+      <button type="button" class="btn btn-primary" id="checkoutBtn">Checkout</button>
+    </form>
+
+    <!-- Modal untuk Cash -->
+    <div class="modal fade" id="cashModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">Pembayaran Cash</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>Total Belanja: <strong>{{ total|rupiah }}</strong></p>
+            <div class="mb-3">
+              <label>Uang Diterima</label>
+              <input type="number" id="inputCash" class="form-control" min="{{ total }}" required>
+            </div>
+            <p>Kembalian: <strong id="changeDisplay">Rp. 0</strong></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="button" class="btn btn-success" id="confirmCash">Konfirmasi</button>
+          </div>
+        </div>
+      </div>
     </div>
-  </form>
-{% else %}
-  <p>Keranjang kosong.</p>
-{% endif %}
+
+    <!-- Modal untuk QRIS -->
+    <div class="modal fade" id="qrisModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">Pembayaran QRIS</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <p>Silakan scan QRIS berikut untuk melakukan pembayaran:</p>
+            <img src="{{ url_for('static', filename='img/qris.png') }}" 
+                alt="QRIS" 
+                style="max-width: 300px; width: 100%; border: 2px solid #ddd; border-radius: 8px; padding: 5px;">
+            <p class="mt-3">Total Belanja: <strong>{{ total|rupiah }}</strong></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="button" class="btn btn-success" id="confirmQris">Konfirmasi Pembayaran</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  {% else %}
+    <p>Keranjang kosong.</p>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    const paymentMethod = document.getElementById("paymentMethod");
+    const cashModal = new bootstrap.Modal(document.getElementById("cashModal"));
+    const qrisModal = new bootstrap.Modal(document.getElementById("qrisModal"));
+
+    const inputCash = document.getElementById("inputCash");
+    const changeDisplay = document.getElementById("changeDisplay");
+    const confirmCash = document.getElementById("confirmCash");
+    const confirmQris = document.getElementById("confirmQris");
+
+    const amountPaidInput = document.getElementById("amountPaid");
+    const changeDueInput = document.getElementById("changeDue");
+    const checkoutForm = document.getElementById("checkoutForm");
+
+    const total = {{ total|tojson }};
+
+    // Klik checkout
+    checkoutBtn.addEventListener("click", () => {
+      const customerName = checkoutForm.querySelector("input[name='customer_name']").value.trim();
+      const customerPhone = checkoutForm.querySelector("input[name='customer_phone']").value.trim();
+
+      if (!customerName || !customerPhone) {
+        Swal.fire({
+          icon: "warning",
+          title: "Data Belum Lengkap",
+          text: "Harap isi nama customer dan nomor HP sebelum checkout!"
+        });
+        return; // stop
+      }
+
+      if (paymentMethod.value === "cash") {
+        cashModal.show();
+      } else if (paymentMethod.value === "qris") {
+        qrisModal.show();
+      }
+    });
+
+    // Input uang cash → hitung kembalian
+    inputCash.addEventListener("input", () => {
+      let received = parseInt(inputCash.value || 0);
+      let diff = received - total;
+
+      if (diff < 0) {
+        changeDisplay.textContent = "Kurang Rp. " + Math.abs(diff).toLocaleString("id-ID");
+        changeDisplay.style.color = "red";
+      } else if (diff > 0) {
+        changeDisplay.textContent = "Kembali Rp. " + diff.toLocaleString("id-ID");
+        changeDisplay.style.color = "green";
+      } else {
+        changeDisplay.textContent = "Pas";
+        changeDisplay.style.color = "blue";
+      }
+    });
+
+    // Konfirmasi cash
+    confirmCash.addEventListener("click", () => {
+      let received = parseInt(inputCash.value || 0);
+      let diff = received - total;
+
+      if (received <= 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Input Tidak Valid",
+          text: "Masukkan jumlah uang yang diterima!"
+        });
+        return;
+      }
+
+      if (diff < 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Uang Kurang",
+          text: "Masih kurang Rp " + Math.abs(diff).toLocaleString("id-ID")
+        });
+        return;
+      }
+
+      amountPaidInput.value = received;
+      changeDueInput.value = diff;
+      checkoutForm.submit();
+    });
+
+    // Konfirmasi QRIS
+    confirmQris.addEventListener("click", () => {
+      amountPaidInput.value = total;
+      changeDueInput.value = 0;
+      checkoutForm.submit();
+    });
+  });
+
+</script>
+
 {% endblock %}

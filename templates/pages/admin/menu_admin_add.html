@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}Tambah Menu{% endblock %}
 {% block content %}
 <div class="admin-container">
@@ -11,16 +10,38 @@
 
     <h2>Tambah Menu</h2>
     <form method="POST" enctype="multipart/form-data">
-      <input type="text" name="name" placeholder="Nama Menu" required>
-      <input type="text" name="description" placeholder="Deskripsi">
-      <input type="number" name="price" placeholder="Harga" required>
-
-      <div class="image-input">
-        <img id="preview" src="{{ url_for('static', filename='img/placeholder.png') }}" width="120">
-        <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+      <div class="mb-3">
+        <label>Nama Menu</label>
+        <input type="text" name="name" class="form-control" placeholder="Nama Menu" required>
       </div>
 
-      <button type="submit">Tambah</button>
+      <div class="mb-3">
+        <label>Deskripsi</label>
+        <input type="text" name="description" class="form-control" placeholder="Deskripsi">
+      </div>
+
+      <div class="mb-3">
+        <label>Harga</label>
+        <input type="number" name="price" class="form-control" placeholder="Harga" required>
+      </div>
+
+      <div class="mb-3">
+        <label>Status Aktif</label><br>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
+          <label class="form-check-label" for="isActive">Aktif</label>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label>Gambar</label>
+        <div class="image-input">
+          <img id="preview" src="{{ url_for('static', filename='img/placeholder.png') }}" width="120">
+          <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Tambah</button>
     </form>
   </main>
 </div>

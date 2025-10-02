@@ -4,25 +4,79 @@
 {% block content %}
 <div class="main-container">
     <h2>Daftar Menu</h2>
+    
+    <!-- 🔍 Live Search -->
+    <div class="mb-3 d-flex" style="gap:10px;">
+        <input type="text" id="searchInput" class="form-control" placeholder="Cari menu...">
+        <button id="clearBtn" class="btn btn-secondary">Clear</button>
+    </div>
 
-    <div class="menu-list">
+    <div id="menuList" class="menu-list">
         {% for item in menu %}
         <div class="card">
             <img src="{{ url_for('static', filename='img/' + (item.image if item.image else 'placeholder.png')) }}" alt="{{ item.name }}">
             <h3>{{ item.name }}</h3>
             <p>{{ item.description }}</p>
-            <p class="price">Rp {{ "%.0f"|format(item.price) }}</p>
+            <p class="price">{{ item.price|rupiah }}</p>
 
             {% if current_user.is_authenticated and current_user.role == "cashier" %}
             <form action="{{ url_for('cashier.add_to_cart') }}" method="post">
                 <input type="hidden" name="menu_id" value="{{ item.id }}">
                 <input type="number" name="quantity" min="1" value="1">
-                <button type="submit" class="btn">Pesan</button>
+                <button type="submit" class="btn btn-primary">Pesan</button>
             </form>
             {% endif %}
-
         </div>
         {% endfor %}
     </div>
 </div>
+
+<!-- 🔥 Script Live Search -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("searchInput");
+    const clearBtn = document.getElementById("clearBtn");
+    const menuList = document.getElementById("menuList");
+
+    function fetchMenu(query = "") {
+        fetch(`/cashier/menu/search?q=${query}`)
+            .then(res => res.json())
+            .then(data => {
+                menuList.innerHTML = "";
+                if (data.length === 0) {
+                    menuList.innerHTML = "<p class='text-muted'>Menu tidak ditemukan.</p>";
+                } else {
+                    data.forEach(item => {
+                        menuList.innerHTML += `
+                            <div class="card">
+                                <img src="/static/img/${item.image || 'placeholder.png'}" alt="${item.name}">
+                                <h3>${item.name}</h3>
+                                <p>${item.description || ""}</p>
+                                <p class="price">Rp ${item.price}</p>
+                                {% if current_user.is_authenticated and current_user.role == "cashier" %}
+                                <form action="{{ url_for('cashier.add_to_cart') }}" method="post">
+                                    <input type="hidden" name="menu_id" value="${item.id}">
+                                    <input type="number" name="quantity" min="1" value="1">
+                                    <button type="submit" class="btn btn-primary">Pesan</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        `;
+                    });
+                }
+            });
+    }
+
+    // live search (ketik langsung)
+    searchInput.addEventListener("input", () => {
+        fetchMenu(searchInput.value);
+    });
+
+    // tombol clear
+    clearBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        fetchMenu(""); // reset ke semua menu
+    });
+});
+</script>
 {% endblock %}

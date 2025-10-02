@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Dapur{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <h2>👨‍🍳 Pesanan Masuk</h2>
+
+    {% if items %}
+    <table class="table">
+        <tr>
+        <th>Order ID</th>
+        <th>Menu</th>
+        <th>Qty</th>
+        <th>Status</th>
+        <th>Aksi</th>
+        </tr>
+        {% for item in items %}
+        <tr>
+        <td>#{{ item.order_id }}</td>
+        <td>{{ item.menu_item.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>
+            {% if item.status == "open" %}
+            <span class="badge bg-warning">Open</span>
+            {% elif item.status == "cooking" %}
+            <span class="badge bg-info">Cooking</span>
+            {% elif item.status == "ready" %}
+            <span class="badge bg-success">Ready</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if item.status == "open" %}
+            <a href="{{ url_for('kitchen.mark_cooking', item_id=item.id) }}" class="btn btn-sm btn-info">Mulai Masak</a>
+            {% elif item.status == "cooking" %}
+            <a href="{{ url_for('kitchen.mark_ready', item_id=item.id) }}" class="btn btn-sm btn-success">Tandai Ready 🍽️</a>
+            {% endif %}
+        </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+    const socket = io();
+
+    socket.on("order_update", (data) => {
+        console.log("Update diterima kitchen:", data);
+
+        // update badge status di tabel
+        let row = document.querySelector(`#row-${data.id}`);
+        if (row) {
+        let statusCell = row.querySelector("td:nth-child(4)"); // kolom status
+        if (data.status === "cooking") {
+            statusCell.innerHTML = `<span class="badge bg-info">Cooking</span>`;
+        } else if (data.status === "ready") {
+            statusCell.innerHTML = `<span class="badge bg-success">Ready</span>`;
+        } else if (data.status === "delivered") {
+            row.remove(); // kalau sudah delivered → hilangkan dari dapur
+        }
+        }
+    });
+    </script>
+
+    {% else %}
+    <p class="text-muted">Belum ada pesanan masuk.</p>
+    {% endif %}
+</div>
+{% endblock %}

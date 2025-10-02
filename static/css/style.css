@@ -47,7 +47,7 @@ header nav a {
 footer {
   background: #eee;
   color: #555;
-  padding: 15px;
+  padding: 15px 2px;
   text-align: center;
   position: fixed;
   bottom: 0;
@@ -468,26 +468,6 @@ table th {
 /* ===============================
    MODAL
    =============================== */
-
-.modal {
-  display: none; 
-  position: fixed; 
-  z-index: 1000; 
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background-color: rgba(0,0,0,0.5);
-}
-
-.modal-content {
-  background: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border-radius: 10px;
-  width: 400px;
-  text-align: center;
-  position: relative;
-}
-
 .modal-content img {
   max-width: 100%;
   border-radius: 8px;
@@ -536,8 +516,9 @@ table th {
     text-decoration: none;
     transition: background 0.3s;
   }
-  .btn-back:hover {
-    text-decoration: none;
-    color: #ffffff;
-    background: #da0808;
-  }
+  
+.btn-back:hover {
+  text-decoration: none;
+  color: #ffffff;
+  background: #da0808;
+} 

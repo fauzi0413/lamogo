@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Waiter{% endblock %}
+
+{% block content %}
+<div class="main-container">
+  <h2>📦 Pesanan Siap Diantar</h2>
+
+  {% if items %}
+  <table class="table">
+    <tr>
+      <th>Order ID</th>
+      <th>ID Pesanan</th>
+      <th>Menu</th>
+      <th>Qty</th>
+      <th>Aksi</th>
+    </tr>
+    {% for item in items %}
+    <tr id="row-{{ item.id }}">
+      <td>#{{ item.order_id }}</td>
+      <td>{{ item.id }}</td>
+      <td>{{ item.menu_item.name }}</td>
+      <td>{{ item.quantity }}</td>
+      <td>
+        <a href="{{ url_for('waiter.deliver_item', item_id=item.id) }}" 
+           class="btn btn-success btn-sm">Antar Pesanan ✅</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+
+    // dengarkan event dari kitchen / waiter lain
+    socket.on("order_update", (data) => {
+      console.log("Update diterima waiter:", data);
+
+      // kalau status sudah ready → otomatis tambah row
+      if (data.status === "ready") {
+        // buat row baru
+        const table = document.querySelector("table");
+        let newRow = document.createElement("tr");
+        newRow.id = `row-${data.id}`;
+        newRow.innerHTML = `
+          <td>#${data.order_id}</td>
+          <td>${data.id}</td>
+          <td>${data.menu_name}</td>
+          <td>${data.quantity}</td>
+          <td>
+            <a href="/waiter/deliver/${data.id}" 
+              class="btn btn-success btn-sm">Antar Pesanan ✅</a>
+          </td>
+        `;
+        table.appendChild(newRow);
+      }
+
+      // kalau sudah delivered → hapus dari tabel
+      if (data.status === "delivered") {
+        let row = document.querySelector(`#row-${data.id}`);
+        if (row) row.remove();
+      }
+    });
+  </script>
+
+  {% else %}
+  <p class="text-muted">Belum ada pesanan siap diantar.</p>
+  {% endif %}
+</div>
+{% endblock %}

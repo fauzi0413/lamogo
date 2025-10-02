@@ -2,56 +2,85 @@
 {% block title %}Riwayat Pesanan{% endblock %}
 
 {% block content %}
-<div class="main-container">
-  <h2>Riwayat Pesanan</h2>
+<div class="main-container mt-4">
+  <h2 class="mb-3">Riwayat Pesanan</h2>
 
   {% if orders %}
-  <ul class="list-group">
+  <div class="list-group">
     {% for order in orders %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
-          #{{ order.id }} - {{ order.customer_name }}  
-          (Rp {{ "%.0f"|format(order.total) }})
-        </span>
-        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#orderModal{{ order.id }}">
+      <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+          <span class="fw-bold">#{{ order.id }}</span> - {{ order.customer_name }}
+          <span class="text-muted">(Rp {{ "%.0f"|format(order.total) }})</span>
+
+          <!-- Badge Status -->
+          {% if order.status == "pending" %}
+            <span class="badge bg-warning">Pending</span>
+          {% elif order.status == "open" %}
+            <span class="badge bg-danger">Open</span>
+          {% elif order.status == "close" %}
+            <span class="badge bg-success">Close</span>
+          {% endif %}
+        </div>
+        <button class="btn btn-sm btn-primary mt-2 mt-md-0" data-bs-toggle="modal" data-bs-target="#orderModal{{ order.id }}">
           Detail
         </button>
-      </li>
+      </div>
 
-      <!-- Modal -->
-      <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+      <!-- Modal Detail -->
+      <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
               <h5 class="modal-title">Detail Pesanan #{{ order.id }}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
               <p><strong>Nama:</strong> {{ order.customer_name }}</p>
               <p><strong>No. HP:</strong> {{ order.customer_phone }}</p>
               <p><strong>Total:</strong> Rp {{ "%.0f"|format(order.total) }}</p>
+              <p><strong>Pembayaran:</strong>
+                {% if order.payment_method == "qris" %}
+                  <span class=" ">QRIS</span>
+                {% elif order.payment_method == "cash" %}
+                  <span class=" ">Cash</span> 
+                {% endif %} 
+              </p>
 
-              <h6>Item Pesanan</h6>
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Menu</th>
-                    <th>Qty</th>
-                    <th>Harga</th>
-                    <th>Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for item in order.items %}
-                  <tr>
-                    <td>{{ item.menu_item.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>Rp {{ "%.0f"|format(item.menu_item.price) }}</td>
-                    <td>Rp {{ "%.0f"|format(item.menu_item.price * item.quantity) }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+              <!-- Status -->
+              <p><strong>Status:</strong>
+                {% if order.status == "pending" %}
+                  <span class="badge bg-warning">Pending</span>
+                {% elif order.status == "open" %}
+                  <span class="badge bg-danger">Open</span>
+                {% elif order.status == "close" %}
+                  <span class="badge bg-success">Close</span>
+                {% endif %}
+              </p>
+
+              <h6 class="mt-3">🍽️ Item Pesanan</h6>
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Menu</th>
+                      <th>Qty</th>
+                      <th>Harga</th>
+                      <th>Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in order.items %}
+                    <tr>
+                      <td>{{ item.menu_item.name }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>Rp {{ "%.0f"|format(item.menu_item.price) }}</td>
+                      <td>Rp {{ "%.0f"|format(item.menu_item.price * item.quantity) }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -60,9 +89,10 @@
         </div>
       </div>
     {% endfor %}
-  </ul>
+  </div>
+
   {% else %}
-  <p>Belum ada pesanan.</p>
+  <div class="alert alert-info mt-3">Belum ada pesanan.</div>
   {% endif %}
 </div>
 {% endblock %}

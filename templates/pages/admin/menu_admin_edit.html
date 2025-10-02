@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}Edit Menu{% endblock %}
 {% block content %}
 <div class="admin-container">
@@ -11,16 +10,38 @@
 
     <h2>Edit Menu</h2>
     <form method="POST" enctype="multipart/form-data">
-      <input type="text" name="name" value="{{ item.name }}" required>
-      <input type="text" name="description" value="{{ item.description }}">
-      <input type="number" name="price" value="{{ "%.0f"|format(item.price) }}" required>
-
-      <div class="image-input">
-        <img id="preview" src="{{ url_for('static', filename='img/' + item.image) if item.image else url_for('static', filename='img/placeholder.png') }}" width="120">
-        <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+      <div class="mb-3">
+        <label>Nama Menu</label>
+        <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
       </div>
 
-      <button type="submit">Simpan</button>
+      <div class="mb-3">
+        <label>Deskripsi</label>
+        <input type="text" name="description" class="form-control" value="{{ item.description }}">
+      </div>
+
+      <div class="mb-3">
+        <label>Harga</label>
+        <input type="number" name="price" class="form-control" value="{{ "%.0f"|format(item.price) }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label>Status Aktif</label><br>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="isActive" name="is_active" {% if item.is_active %}checked{% endif %}>
+          <label class="form-check-label" for="isActive">Aktif</label>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label>Gambar</label>
+        <div class="image-input">
+          <img id="preview" src="{{ url_for('static', filename='img/' + item.image) if item.image else url_for('static', filename='img/placeholder.png') }}" width="120">
+          <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Simpan</button>
     </form>
   </main>
 </div>

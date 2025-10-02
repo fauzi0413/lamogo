@@ -26,7 +26,7 @@
         <tr>
           <td>{{ item.name }}</td>
           <td>{{ item.description }}</td>
-          <td>Rp {{ "%.0f"|format(item.price) }}</td>
+          <td>{{ item.price|rupiah }}</td>
           <td>
             <a href="{{ url_for('admin.edit_menu', item_id=item.id) }}">Edit</a> |
             <a href="{{ url_for('admin.delete_menu', item_id=item.id) }}" 

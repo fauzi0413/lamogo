@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Riwayat Pesanan{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+
+  <main class="main-content">
+    <h2 class="mb-3">📜 Riwayat Pesanan</h2>
+
+    {% if orders %}
+    <div class="list-group">
+      {% for order in orders %}
+        <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+          <div>
+            <span class="fw-bold">#{{ order.id }}</span> - {{ order.customer_name }}
+            <span class="text-muted">( {{ order.payment_method|capitalize }} )</span> |
+            <span class="badge 
+              {% if order.status == 'open' %} bg-danger 
+              {% elif order.status == 'pending' %} bg-warning
+              {% else %} bg-success {% endif %}">
+              {{ order.status|upper }}
+            </span>
+            <br>
+            <small class="text-muted">{{ order.created_at.strftime("%d-%m-%Y %H:%M") }}</small>
+          </div>
+          <button class="btn btn-sm btn-primary mt-2 mt-md-0" 
+                  data-bs-toggle="modal" data-bs-target="#orderModal{{ order.id }}">
+            Detail
+          </button>
+        </div>
+
+        <!-- Modal Detail Pesanan -->
+        <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detail Pesanan #{{ order.id }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <p><strong>Nama:</strong> {{ order.customer_name }}</p>
+                <p><strong>No. HP:</strong> {{ order.customer_phone }}</p>
+                <p><strong>Total:</strong> {{ order.total|rupiah }}</p>
+                <p><strong>Bayar:</strong> {{ (order.amount_paid or 0)|rupiah }}</p>
+                <p><strong>Kembali:</strong> {{ (order.change_due or 0)|rupiah }}</p>
+                <p><strong>Metode:</strong>
+                    {% if order.payment_method == 'cash' %}
+                        Tunai
+                    {% elif order.payment_method == 'qris' %}
+                        QRIS
+                    {% else %}
+                        {{ order.payment_method }}
+                    {% endif %}
+                </p>
+                <h6 class="mt-3">🍽️ Item Pesanan</h6>
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Menu</th>
+                        <th>Qty</th>
+                        <th>Harga</th>
+                        <th>Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for item in order.items %}
+                      <tr>
+                        <td>{{ item.menu_item.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.menu_item.price|rupiah }}</td>
+                        <td>{{ (item.menu_item.price * item.quantity)|rupiah }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="alert alert-info mt-3">Belum ada pesanan.</div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
