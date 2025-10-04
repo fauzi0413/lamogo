@@ -11,7 +11,7 @@
       <a href="{{ url_for('admin.add_menu') }}" class="btn">Tambah Menu</a>
     </div>
 
-    <!-- Tabel Menu -->
+    <!-- 📜 Tabel Menu -->
     <table>
       <thead>
         <tr>
@@ -30,14 +30,17 @@
           <td>
             <a href="{{ url_for('admin.edit_menu', item_id=item.id) }}">Edit</a> |
             <a href="{{ url_for('admin.delete_menu', item_id=item.id) }}" 
-              class="delete-btn" 
-              data-name="{{ item.name }}">
-              Hapus
+               class="delete-btn" 
+               data-name="{{ item.name }}">
+               Hapus
             </a> |
-            <a href="#" class="detail-btn" 
+            <a href="#" 
+              class="detail-btn" 
+              data-bs-toggle="modal"
+              data-bs-target="#detailModal"
               data-name="{{ item.name }}"
               data-description="{{ item.description }}"
-              data-price="Rp {{ '%.0f'|format(item.price) }}"
+              data-price="{{ item.price|rupiah }}"
               data-image="{{ url_for('static', filename='img/' + item.image) if item.image else url_for('static', filename='img/placeholder.png') }}">
               Detail
             </a>
@@ -47,91 +50,74 @@
       </tbody>
     </table>
   </main>
-
-  <!-- JavaScript untuk konfirmasi hapus -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      // Konfirmasi hapus dengan SweetAlert
-      document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", function (e) {
-          e.preventDefault();
-          const url = this.getAttribute("href");
-          const menuName = this.dataset.name;
-
-          Swal.fire({
-            title: 'Yakin hapus?',
-            text: `Apakah Anda yakin ingin menghapus menu "${menuName}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-          }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.href = url;
-            }
-          });
-        });
-      });
-
-      // Modal detail
-      const modal = document.getElementById("detailModal");
-      const closeBtn = modal.querySelector(".close");
-
-      document.querySelectorAll(".detail-btn").forEach(btn => {
-        btn.addEventListener("click", function (e) {
-          e.preventDefault();
-          document.getElementById("modalName").innerText = this.dataset.name;
-          document.getElementById("modalDescription").innerText = this.dataset.description;
-          document.getElementById("modalPrice").innerText = this.dataset.price;
-          document.getElementById("modalImage").src = this.dataset.image;
-          modal.style.display = "block";
-        });
-      });
-
-      closeBtn.addEventListener("click", () => modal.style.display = "none");
-      window.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
-      });
-    });
-  </script>
-  
-  <!-- JavaScript untuk modal detail -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const modal = document.getElementById("detailModal");
-      const closeBtn = modal.querySelector(".close");
-
-      document.querySelectorAll(".detail-btn").forEach(btn => {
-        btn.addEventListener("click", function (e) {
-          e.preventDefault();
-          document.getElementById("modalName").innerText = this.dataset.name;
-          document.getElementById("modalDescription").innerText = this.dataset.description;
-          document.getElementById("modalPrice").innerText = this.dataset.price;
-          document.getElementById("modalImage").src = this.dataset.image;
-          modal.style.display = "block";
-        });
-      });
-
-      closeBtn.addEventListener("click", () => modal.style.display = "none");
-      window.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
-      });
-    });
-    </script>
-     
 </div>
 
-<!-- Modal -->
-<div id="detailModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h3 id="modalName"></h3>
-    <img id="modalImage" src="{{ url_for('static', filename='img/placeholder.png') }}" alt="Gambar Menu" width="200">
-    <p id="modalDescription"></p>
-    <p id="modalPrice"></p>
+<!-- Modal Bootstrap -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalName">Detail Menu</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="modalImage" src="{{ url_for('static', filename='img/placeholder.png') }}" 
+             alt="Gambar Menu" class="img-fluid rounded mb-3" style="max-width: 300px;">
+        <p id="modalDescription"></p>
+        <h5 id="modalPrice" class="text-success"></h5>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
   </div>
 </div>
 
+
+<!-- 📜 JavaScript -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    // 🗑️ Konfirmasi hapus menggunakan SweetAlert
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const url = this.getAttribute("href");
+        const menuName = this.dataset.name;
+
+        Swal.fire({
+          title: 'Yakin hapus?',
+          text: `Apakah Anda yakin ingin menghapus menu "${menuName}"?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Ya, hapus!',
+          cancelButtonText: 'Batal'
+        }).then(result => {
+          if (result.isConfirmed) {
+            window.location.href = url;
+          }
+        });
+      });
+    });
+
+    const detailModal = document.getElementById('detailModal');
+    detailModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget; // tombol yg diklik
+
+      // Ambil data dari atribut data-*
+      const name = button.getAttribute('data-name');
+      const description = button.getAttribute('data-description');
+      const price = button.getAttribute('data-price');
+      const image = button.getAttribute('data-image');
+
+      // Masukkan ke modal
+      detailModal.querySelector('#modalName').textContent = name;
+      detailModal.querySelector('#modalDescription').textContent = description;
+      detailModal.querySelector('#modalPrice').textContent = price;
+      detailModal.querySelector('#modalImage').src = image;
+    });
+  });
+</script>
 {% endblock %}

@@ -5,6 +5,7 @@ from flask_login import login_required
 from extensions import db
 from models import MenuItem, Order, OrderItem
 from sqlalchemy.orm import joinedload
+from urllib.parse import quote
 
 cashier_bp = Blueprint("cashier", __name__, url_prefix="/cashier")
 
@@ -164,3 +165,4 @@ def order():
         .all()
     )
     return render_template("pages/cashier/orders.html", orders=orders)
+

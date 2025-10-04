@@ -17,10 +17,21 @@ def dashboard():
 def mark_cooking(item_id):
     item = OrderItem.query.get_or_404(item_id)
     item.status = "cooking"
+
+    # update status order → pending
+    order = item.order
+    if order.status != "pending":  
+        order.status = "pending"
+
     db.session.commit()
 
     # broadcast event ke semua client
-    socketio.emit("order_update", {"id": item.id, "status": "cooking"})
+    socketio.emit("order_update", {
+        "id": item.id, 
+        "status": "cooking",
+        "order_id": item.order_id,
+        "order_status": order.status
+    })
 
     flash(f"{item.menu_item.name} sedang dimasak", "info")
     return redirect(url_for("kitchen.dashboard"))

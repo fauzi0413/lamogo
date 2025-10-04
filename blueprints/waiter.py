@@ -12,6 +12,16 @@ def dashboard():
     items = OrderItem.query.filter(OrderItem.status == "ready").all()
     return render_template("pages/waiter/dashboard.html", items=items)
 
+def _maybe_close_order(order: Order) -> None:
+    """
+    Tutup order jika semua OrderItem sudah delivered/close.
+    """
+    allowed_done = {"delivered", "close"}         # status item yang dianggap selesai
+    if all(i.status in allowed_done for i in order.items):
+        if order.status != "close":
+            order.status = "close"
+            db.session.commit()
+
 @waiter_bp.route("/deliver/<int:item_id>")
 @login_required
 def deliver_item(item_id):
@@ -19,18 +29,16 @@ def deliver_item(item_id):
     item.status = "delivered"
     db.session.commit()
 
-    # cek kalau semua item dalam order sudah delivered → update order ke close
+    # cek semua item pada order; jika semua delivered/close → order close
     order = Order.query.get(item.order_id)
-    if all(i.status == "delivered" for i in order.items):
-        order.status = "close"
-        db.session.commit()
+    _maybe_close_order(order)
 
-    # 🔥 kirim event realtime ke semua client
+    # broadcast realtime
     socketio.emit("order_update", {
         "id": item.id,
         "order_id": item.order_id,
-        "status": "delivered",
-        "order_status": order.status
+        "status": item.status,          # "delivered"
+        "order_status": order.status    # bisa "close" kalau semua selesai
     })
 
     flash(f"Pesanan {item.menu_item.name} berhasil diantar ✅", "success")

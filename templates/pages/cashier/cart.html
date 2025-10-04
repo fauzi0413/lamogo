@@ -14,7 +14,12 @@
             <td>{{ item.name }}</td>
             <td> {{ item.price|rupiah }}</td>
             <td>
-              <input type="number" name="qty_{{ item.id }}" value="{{ item.qty }}" min="1">
+              <input type="number" 
+                    name="qty_{{ item.id }}" 
+                    value="{{ item.qty }}" 
+                    min="1"
+                    class="qty-input"
+                    data-original="{{ item.qty }}">
             </td>
             <td>{{ (item.price * item.qty)|rupiah }}</td>
             <td>
@@ -123,6 +128,19 @@
 
     const total = {{ total|tojson }};
 
+    // 🔎 Cek apakah qty ada yang berubah
+    function hasCartChanged() {
+      const qtyInputs = document.querySelectorAll(".qty-input");
+      for (let input of qtyInputs) {
+        const original = parseInt(input.dataset.original);
+        const current = parseInt(input.value);
+        if (original !== current) {
+          return true; // ada yang berubah
+        }
+      }
+      return false;
+    }
+
     // Klik checkout
     checkoutBtn.addEventListener("click", () => {
       const customerName = checkoutForm.querySelector("input[name='customer_name']").value.trim();
@@ -134,9 +152,20 @@
           title: "Data Belum Lengkap",
           text: "Harap isi nama customer dan nomor HP sebelum checkout!"
         });
-        return; // stop
+        return;
       }
 
+      // 🔒 Cek apakah keranjang berubah
+      if (hasCartChanged()) {
+        Swal.fire({
+          icon: "warning",
+          title: "Keranjang Berubah",
+          text: "Anda mengubah jumlah item. Harap tekan tombol 'Update Keranjang' sebelum checkout!"
+        });
+        return;
+      }
+
+      // Kalau aman → buka modal pembayaran
       if (paymentMethod.value === "cash") {
         cashModal.show();
       } else if (paymentMethod.value === "qris") {
@@ -195,8 +224,27 @@
       changeDueInput.value = 0;
       checkoutForm.submit();
     });
-  });
 
+    // --- 👇 Tambahkan kode ini di bagian bawah script ---
+    const nameInput = document.querySelector("input[name='customer_name']");
+    const phoneInput = document.querySelector("input[name='customer_phone']");
+
+    // Simpan setiap kali user mengetik
+    nameInput.addEventListener("input", () => {
+      localStorage.setItem("customer_name", nameInput.value);
+    });
+
+    phoneInput.addEventListener("input", () => {
+      localStorage.setItem("customer_phone", phoneInput.value);
+    });
+
+    // Saat halaman reload → isi ulang dari localStorage
+    const savedName = localStorage.getItem("customer_name");
+    const savedPhone = localStorage.getItem("customer_phone");
+    if (savedName) nameInput.value = savedName;
+    if (savedPhone) phoneInput.value = savedPhone;
+  });
 </script>
+
 
 {% endblock %}

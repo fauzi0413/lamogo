@@ -11,11 +11,11 @@
       <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
         <div>
           <span class="fw-bold">#{{ order.id }}</span> - {{ order.customer_name }}
-          <span class="text-muted">(Rp {{ "%.0f"|format(order.total) }})</span>
+          <span class="text-muted">({{ order.total|rupiah }})</span>
 
           <!-- Badge Status -->
           {% if order.status == "pending" %}
-            <span class="badge bg-warning">Pending</span>
+            <span class="badge bg-warning">On Progress</span>
           {% elif order.status == "open" %}
             <span class="badge bg-danger">Open</span>
           {% elif order.status == "close" %}
@@ -38,7 +38,7 @@
             <div class="modal-body">
               <p><strong>Nama:</strong> {{ order.customer_name }}</p>
               <p><strong>No. HP:</strong> {{ order.customer_phone }}</p>
-              <p><strong>Total:</strong> Rp {{ "%.0f"|format(order.total) }}</p>
+              <p><strong>Total:</strong> {{ order.total|rupiah }}</p>
               <p><strong>Pembayaran:</strong>
                 {% if order.payment_method == "qris" %}
                   <span class=" ">QRIS</span>
@@ -48,9 +48,9 @@
               </p>
 
               <!-- Status -->
-              <p><strong>Status:</strong>
+              <p><strong>Status Pesanan:</strong>
                 {% if order.status == "pending" %}
-                  <span class="badge bg-warning">Pending</span>
+                  <span class="badge bg-warning">On Progress</span>
                 {% elif order.status == "open" %}
                   <span class="badge bg-danger">Open</span>
                 {% elif order.status == "close" %}
@@ -67,6 +67,7 @@
                       <th>Qty</th>
                       <th>Harga</th>
                       <th>Subtotal</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -74,8 +75,21 @@
                     <tr>
                       <td>{{ item.menu_item.name }}</td>
                       <td>{{ item.quantity }}</td>
-                      <td>Rp {{ "%.0f"|format(item.menu_item.price) }}</td>
-                      <td>Rp {{ "%.0f"|format(item.menu_item.price * item.quantity) }}</td>
+                      <td>{{ item.menu_item.price|rupiah }}</td>
+                      <td>{{ (item.menu_item.price * item.quantity) | rupiah  }}</td>
+                      <td>
+                        {% if item.status == "pending" %}
+                          <span class="badge bg-warning">Pending</span>
+                        {% elif item.status == "cooking" %}
+                          <span class="badge bg-info">Cooking</span>
+                        {% elif item.status == "open" %}
+                          <span class="badge bg-danger">Belum dimasak</span>
+                        {% elif item.status == "ready" %}
+                          <span class="badge bg-primary">Ready</span>
+                        {% elif item.status == "delivered" %}
+                          <span class="badge bg-success">Delivered</span>
+                        {% endif %}
+                      </td>
                     </tr>
                     {% endfor %}
                   </tbody>

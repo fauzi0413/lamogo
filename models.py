@@ -43,7 +43,7 @@ class Order(db.Model):
     payment_method = db.Column(db.String(50), nullable=True)  
     # payment_method: "cash", "qris", dll
     status = db.Column(db.String(20), default="open")  
-    # status: "pending", "open", "served", "closed"
+    # status: "on progress", "open", "served", "closed"
     amount_paid = db.Column(db.Integer, nullable=True)
     change_due = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=db.func.now())
@@ -62,7 +62,7 @@ class OrderItem(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)  # harga saat transaksi (biar ga ikut berubah kalau harga menu berubah)
     status = db.Column(db.String(20), default="pending")  
-    # status: "pending", "cooking", "ready", "served"
+    # status: "pending", "cooking", "ready", "delivered"
     notes = db.Column(db.Text, nullable=True)  # catatan tambahan (misal: pedas, tanpa es)
 
     menu_item = db.relationship("MenuItem", backref="order_items")
