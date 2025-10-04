@@ -2,6 +2,7 @@ from flask import Flask, redirect, url_for
 from config import Config
 from extensions import db, migrate, login_manager, socketio
 from models import User
+from datetime import datetime
 
 from blueprints.auth import auth_bp
 from blueprints.admin import admin_bp
@@ -36,6 +37,10 @@ def create_app():
     @app.template_filter("rupiah")
     def rupiah_format(value):
         return f"Rp. {value:,.0f}".replace(",", ".")
+    
+    @app.context_processor
+    def utility_processor():
+        return dict(range=range, now=datetime.now)
 
     # register blueprint
     app.register_blueprint(auth_bp, url_prefix="/auth")

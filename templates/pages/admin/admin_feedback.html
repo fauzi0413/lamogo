@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Feedback Pelanggan{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+  {% include "sidebar.html" %}
+
+  <main class="main-content">
+    <h2 class="mb-3">📋 Feedback Pelanggan</h2>
+
+    {% if feedbacks %}
+      <table class="table table-striped align-middle shadow-sm">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Order ID</th>
+            <th>Nama Customer</th>
+            <th>Rating</th>
+            <th>Pesan</th>
+            <th>Tanggal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fb in feedbacks %}
+          <tr>
+            <td>{{ fb.id }}</td>
+            <td>
+              {% if fb.order_id %}
+                #{{ fb.order_id }}
+              {% else %}
+                <span class="text-muted">Anonim</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if fb.customer_name == 'Anonim' %}
+                <span class="badge bg-secondary">Anonim</span>
+              {% else %}
+                {{ fb.customer_name }}
+              {% endif %}
+            </td>
+            <td>
+              {% for i in range(1, 6) %}
+                {% if i <= fb.rating %}
+                  <i class="fas fa-star text-warning"></i>
+                {% else %}
+                  <i class="far fa-star text-muted"></i>
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td>{{ fb.message or '-' }}</td>
+            <td>{{ fb.created_at.strftime('%d %b %Y %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="alert alert-info">Belum ada feedback pelanggan.</div>
+    {% endif %}
+  </main>
+</div>
+
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+{% endblock %}

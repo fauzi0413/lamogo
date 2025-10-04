@@ -190,7 +190,7 @@
       }
     });
 
-    // Konfirmasi cash
+    // 🧾 Konfirmasi Cash
     confirmCash.addEventListener("click", () => {
       let received = parseInt(inputCash.value || 0);
       let diff = received - total;
@@ -215,34 +215,45 @@
 
       amountPaidInput.value = received;
       changeDueInput.value = diff;
+
+      // 🧹 Bersihkan localStorage sebelum checkout
+      localStorage.removeItem("customer_name");
+      localStorage.removeItem("customer_phone");
+
       checkoutForm.submit();
     });
 
-    // Konfirmasi QRIS
+    // 💳 Konfirmasi QRIS
     confirmQris.addEventListener("click", () => {
       amountPaidInput.value = total;
       changeDueInput.value = 0;
+
+      // 🧹 Bersihkan localStorage sebelum checkout
+      localStorage.removeItem("customer_name");
+      localStorage.removeItem("customer_phone");
+
       checkoutForm.submit();
     });
 
-    // --- 👇 Tambahkan kode ini di bagian bawah script ---
+    // --- 🗂️ Simpan & muat data nama/no HP ---
     const nameInput = document.querySelector("input[name='customer_name']");
     const phoneInput = document.querySelector("input[name='customer_phone']");
 
-    // Simpan setiap kali user mengetik
-    nameInput.addEventListener("input", () => {
-      localStorage.setItem("customer_name", nameInput.value);
-    });
+    if (nameInput && phoneInput) {
+      // Simpan setiap kali user mengetik
+      nameInput.addEventListener("input", () => {
+        localStorage.setItem("customer_name", nameInput.value);
+      });
+      phoneInput.addEventListener("input", () => {
+        localStorage.setItem("customer_phone", phoneInput.value);
+      });
 
-    phoneInput.addEventListener("input", () => {
-      localStorage.setItem("customer_phone", phoneInput.value);
-    });
-
-    // Saat halaman reload → isi ulang dari localStorage
-    const savedName = localStorage.getItem("customer_name");
-    const savedPhone = localStorage.getItem("customer_phone");
-    if (savedName) nameInput.value = savedName;
-    if (savedPhone) phoneInput.value = savedPhone;
+      // Isi ulang dari localStorage
+      const savedName = localStorage.getItem("customer_name");
+      const savedPhone = localStorage.getItem("customer_phone");
+      if (savedName) nameInput.value = savedName;
+      if (savedPhone) phoneInput.value = savedPhone;
+    }
   });
 </script>
 

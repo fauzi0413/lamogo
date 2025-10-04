@@ -199,3 +199,26 @@ def riwayat_pesanan():
         .all()
     )
     return render_template("pages/admin/admin_riwayat_pesanan.html", orders=orders)
+
+# ========================
+# FEEDBACK MANAGEMENT
+# ========================
+from models import Feedback
+
+@admin_bp.route("/feedback")
+@login_required
+def manage_feedback():
+    feedbacks = (
+        db.session.query(
+            Feedback.id,
+            Feedback.customer_name,
+            Feedback.rating,
+            Feedback.message,
+            Feedback.created_at,
+            Order.id.label("order_id")
+        )
+        .outerjoin(Order, Feedback.order_id == Order.id)  # gunakan LEFT JOIN
+        .order_by(Feedback.created_at.desc())
+        .all()
+    )
+    return render_template("pages/admin/admin_feedback.html", feedbacks=feedbacks)

@@ -1,6 +1,7 @@
 from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from datetime import datetime
 
 # ===============================
 # USER MODEL
@@ -66,3 +67,20 @@ class OrderItem(db.Model):
     notes = db.Column(db.Text, nullable=True)  # catatan tambahan (misal: pedas, tanpa es)
 
     menu_item = db.relationship("MenuItem", backref="order_items")
+
+
+
+# ===============================
+# FEEDBACK MODEL
+# ===============================
+class Feedback(db.Model):
+    __tablename__ = "feedback"
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("order.id"), nullable=True)
+    customer_name = db.Column(db.String(100))
+    rating = db.Column(db.Integer, nullable=False)  # 1–5
+    message = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    order = db.relationship("Order", backref="feedbacks")
