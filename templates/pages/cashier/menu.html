@@ -1,82 +1,113 @@
 {% extends "base.html" %}
-
 {% block title %}Daftar Menu{% endblock %}
-{% block content %}
-<div class="main-container">
-    <h2>Daftar Menu</h2>
-    
-    <!-- 🔍 Live Search -->
-    <div class="mb-3 d-flex" style="gap:10px;">
-        <input type="text" id="searchInput" class="form-control" placeholder="Cari menu...">
-        <button id="clearBtn" class="btn btn-secondary">Clear</button>
-    </div>
 
-    <div id="menuList" class="menu-list">
-        {% for item in menu %}
-        <div class="card">
-            <img src="{{ url_for('static', filename='img/' + (item.image if item.image else 'placeholder.png')) }}" alt="{{ item.name }}">
-            <h3>{{ item.name }}</h3>
-            <p>{{ item.description }}</p>
-            <p class="price">{{ item.price|rupiah }}</p>
+{% block content %}
+<div class="container mt-4">
+  <h2 class="fw-bold mb-4">Daftar Menu</h2>
+
+  <!-- 🔍 Live Search -->
+  <div class="input-group mb-4">
+    <input type="text" id="searchInput" class="form-control" placeholder="Cari menu...">
+    <button id="clearBtn" class="btn btn-secondary">Clear</button>
+  </div>
+
+  <!-- 🧩 List Menu -->
+  <div id="menuList" class="row g-3">
+    {% for item in menu %}
+      <div class="col-md-3 col-sm-6">
+        <div class="card h-100 text-center shadow-sm border-0">
+          <img src="{{ url_for('static', filename='img/' + (item.image if item.image else 'placeholder.png')) }}"
+               class="card-img-top" alt="{{ item.name }}">
+          <div class="card-body">
+            <h5 class="card-title fw-bold">{{ item.name }}</h5>
+            <p class="card-text text-muted">{{ item.description or '' }}</p>
+            <p class="text-primary fw-semibold">{{ item.price|rupiah }}</p>
 
             {% if current_user.is_authenticated and current_user.role == "cashier" %}
-            <form action="{{ url_for('cashier.add_to_cart') }}" method="post">
-                <input type="hidden" name="menu_id" value="{{ item.id }}">
-                <input type="number" name="quantity" min="1" value="1">
-                <button type="submit" class="btn btn-primary">Pesan</button>
+            <form action="{{ url_for('cashier.add_to_cart') }}" method="post" class="d-flex flex-column align-items-center">
+              <input type="hidden" name="menu_id" value="{{ item.id }}">
+              <input type="number" name="quantity" min="1" value="1" class="form-control mb-2 text-center" style="width: 80px;">
+              <button type="submit" class="btn btn-primary btn-sm w-100">Pesan</button>
             </form>
             {% endif %}
+          </div>
         </div>
-        {% endfor %}
-    </div>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 
-<!-- 🔥 Script Live Search -->
+<!-- Role User -->
+<script>
+  const USER_ROLE = "{{ current_user.role if current_user.is_authenticated else '' }}";
+</script>
+
+<!-- 🔥 Live Search Script -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const searchInput = document.getElementById("searchInput");
-    const clearBtn = document.getElementById("clearBtn");
-    const menuList = document.getElementById("menuList");
+  const searchInput = document.getElementById("searchInput");
+  const clearBtn = document.getElementById("clearBtn");
+  const menuList = document.getElementById("menuList");
 
-    function fetchMenu(query = "") {
-        fetch(`/cashier/menu/search?q=${query}`)
-            .then(res => res.json())
-            .then(data => {
-                menuList.innerHTML = "";
-                if (data.length === 0) {
-                    menuList.innerHTML = "<p class='text-muted'>Menu tidak ditemukan.</p>";
-                } else {
-                    data.forEach(item => {
-                        menuList.innerHTML += `
-                            <div class="card">
-                                <img src="/static/img/${item.image || 'placeholder.png'}" alt="${item.name}">
-                                <h3>${item.name}</h3>
-                                <p>${item.description || ""}</p>
-                                <p class="price">Rp ${item.price}</p>
-                                {% if current_user.is_authenticated and current_user.role == "cashier" %}
-                                <form action="{{ url_for('cashier.add_to_cart') }}" method="post">
-                                    <input type="hidden" name="menu_id" value="${item.id}">
-                                    <input type="number" name="quantity" min="1" value="1">
-                                    <button type="submit" class="btn btn-primary">Pesan</button>
-                                </form>
-                                {% endif %}
-                            </div>
-                        `;
-                    });
-                }
-            });
-    }
+  // Fetch menu berdasarkan query pencarian
+  function fetchMenu(query = "") {
+    fetch(`/cashier/menu/search?q=${encodeURIComponent(query)}`)
+      .then(res => res.json())
+      .then(data => {
+        menuList.innerHTML = ""; // Kosongkan dulu
+        if (data.length === 0) {
+          menuList.innerHTML = "<p class='text-muted'>Menu tidak ditemukan.</p>";
+          return;
+        }
 
-    // live search (ketik langsung)
-    searchInput.addEventListener("input", () => {
-        fetchMenu(searchInput.value);
-    });
+        data.forEach(item => {
+          const col = document.createElement("div");
+          col.className = "col-md-3 col-sm-6";
 
-    // tombol clear
-    clearBtn.addEventListener("click", () => {
-        searchInput.value = "";
-        fetchMenu(""); // reset ke semua menu
-    });
+          const card = document.createElement("div");
+          card.className = "card h-100 text-center shadow-sm border-0";
+          card.innerHTML = `
+            <img src="/static/img/${item.image || 'placeholder.png'}" class="card-img-top" alt="${item.name}">
+            <div class="card-body">
+              <h5 class="card-title fw-bold">${item.name}</h5>
+              <p class="card-text text-muted">${item.description || ''}</p>
+              <p class="text-primary fw-semibold">Rp ${Number(item.price).toLocaleString('id-ID')}</p>
+            </div>
+          `;
+
+          // Tambahkan tombol pesan jika cashier
+          if (USER_ROLE === "cashier") {
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/cashier/add_to_cart";
+            form.className = "d-flex flex-column align-items-center";
+            form.innerHTML = `
+              <input type="hidden" name="menu_id" value="${item.id}">
+              <input type="number" name="quantity" min="1" value="1" class="form-control mb-2 text-center" style="width: 80px;">
+              <button type="submit" class="btn btn-primary btn-sm w-100">Pesan</button>
+            `;
+            card.querySelector(".card-body").appendChild(form);
+          }
+
+          col.appendChild(card);
+          menuList.appendChild(col);
+        });
+      })
+      .catch(err => {
+        console.error("Error:", err);
+      });
+  }
+
+  // Ketika mengetik di input search
+  searchInput.addEventListener("input", () => {
+    fetchMenu(searchInput.value);
+  });
+
+  // Tombol Clear
+  clearBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    fetchMenu("");
+  });
 });
 </script>
 {% endblock %}

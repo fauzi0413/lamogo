@@ -20,18 +20,27 @@ def dashboard():
 
 
 @cashier_bp.route("/menu")
-@login_required
 def menu():
-    query = request.args.get("q", "")
-    if query:
-        items = MenuItem.query.filter(
-            (MenuItem.name.ilike(f"%{query}%")) | 
-            (MenuItem.description.ilike(f"%{query}%")),
-            MenuItem.is_active == True
-        ).all()
+    menu = MenuItem.query.all()
+    return render_template("pages/cashier/menu.html", menu=menu)
+
+@cashier_bp.route("/menu/search")
+def menu_search():
+    query = request.args.get("q", "").strip().lower()
+    if not query:
+        items = MenuItem.query.all()
     else:
-        items = MenuItem.query.filter_by(is_active=True).all()
-    return render_template("pages/cashier/menu.html", menu=items)
+        items = MenuItem.query.filter(MenuItem.name.ilike(f"%{query}%")).all()
+
+    result = [{
+        "id": item.id,
+        "name": item.name,
+        "description": item.description,
+        "price": item.price,
+        "image": item.image
+    } for item in items]
+    
+    return jsonify(result)
 
 
 # ========================

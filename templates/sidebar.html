@@ -1,11 +1,49 @@
-<!-- Sidebar -->
-  <aside class="sidebar">
-    <h3>Admin Panel</h3>
-    <ul>
-      <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-      <li><a href="{{ url_for('admin.manage_users') }}">Management User</a></li>
-      <li><a href="{{ url_for('admin.manage_menu') }}">Management Menu</a></li>
-      <li><a href="{{ url_for('admin.riwayat_pesanan') }}">Riwayat Pesanan</a></li>
-      <li><a href="{{ url_for('admin.manage_feedback') }}">Management Feedback</a></li>
-    </ul>
-  </aside>
+<!-- Sidebar Admin -->
+<div class="offcanvas-lg offcanvas-start offcanvas-lg bg-primary text-white d-flex flex-column p-3"
+     tabindex="-1" id="adminSidebar" aria-labelledby="adminSidebarLabel"
+     style="min-height: 100vh;">
+
+  <!-- Header (mobile only) -->
+  <div class="offcanvas-header d-flex justify-content-between d-lg-none">
+    <h5 class="offcanvas-title fw-bold" id="adminSidebarLabel">Admin Panel</h5>
+    <button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas"data-bs-target="#adminSidebar" aria-controls="adminSidebar" aria-label="Close"></button>
+  </div>
+
+  <!-- Body -->
+  <div class="offcanvas-body p-0 d-flex flex-column flex-grow-1">
+    <h4 class="fw-bold mb-4 d-none d-lg-block mt-3 px-2">Admin Panel</h4>
+
+    <ul class="nav flex-column gap-1">
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.dashboard' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+           href="{{ url_for('admin.dashboard') }}">
+          <i class="fa-solid fa-chart-line me-2"></i> Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_users' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+           href="{{ url_for('admin.manage_users') }}">
+          <i class="fa-solid fa-users me-2"></i> Management User
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_menu' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+           href="{{ url_for('admin.manage_menu') }}">
+          <i class="fa-solid fa-utensils me-2"></i> Management Menu
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.riwayat_pesanan' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+           href="{{ url_for('admin.riwayat_pesanan') }}">
+          <i class="fa-solid fa-receipt me-2"></i> Riwayat Pesanan
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_feedback' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+           href="{{ url_for('admin.manage_feedback') }}">
+          <i class="fa-solid fa-comments me-2"></i> Riwayat Feedback
+        </a>
+      </li>
+    </ul> 
+  </div>
+</div>

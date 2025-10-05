@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Dashboard Admin{% endblock %}
@@ -6,26 +7,45 @@
   {% include "sidebar.html" %}
 
   <main class="main-content">
-    <h2>Dashboard Admin</h2>
+    <div class="header-actions">
+      <h2>Dashboard Admin</h2> 
+    </div>
 
-    <div class="stats">
-      <div class="card">
-        <h3>Total Pesanan</h3>
-        <p>{{ total_orders }}</p>
+    <div class="row g-3">
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-primary fw-bold">Total Pesanan</h6>
+            <p class="fs-5 mb-0">{{ total_orders }}</p>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <h3>Total Penjualan</h3>
-        <p>{{ total_sales|rupiah }}</p>
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-primary fw-bold">Total Penjualan</h6>
+            <p class="fs-5 mb-0">{{ total_sales|rupiah }}</p>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <h3>Total User</h3>
-        <p>{{ total_users }}</p>
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-primary fw-bold">Total User</h6>
+            <p class="fs-5 mb-0">{{ total_users }}</p>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <h3>Total Menu</h3>
-        <p>{{ total_menu }}</p>
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-primary fw-bold">Total Menu</h6>
+            <p class="fs-5 mb-0">{{ total_menu }}</p>
+          </div>
+        </div>
       </div>
     </div>
   </main>
 </div>
+ 
 {% endblock %}
