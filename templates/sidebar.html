@@ -1,5 +1,5 @@
 <!-- Sidebar Admin -->
-<div class="offcanvas-lg offcanvas-start offcanvas-lg bg-primary text-white d-flex flex-column p-3"
+<div class="offcanvas-lg offcanvas-start offcanvas-lg bg-orange text-white d-flex flex-column p-3"
      tabindex="-1" id="adminSidebar" aria-labelledby="adminSidebarLabel"
      style="min-height: 100vh;">
 
@@ -15,31 +15,31 @@
 
     <ul class="nav flex-column gap-1">
       <li class="nav-item">
-        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.dashboard' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.dashboard' %}bg-white text-orange fw-bold{% else %}text-white{% endif %}"
            href="{{ url_for('admin.dashboard') }}">
           <i class="fa-solid fa-chart-line me-2"></i> Dashboard
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_users' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_users' %}bg-white text-orange fw-bold{% else %}text-white{% endif %}"
            href="{{ url_for('admin.manage_users') }}">
           <i class="fa-solid fa-users me-2"></i> Management User
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_menu' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_menu' %}bg-white text-orange fw-bold{% else %}text-white{% endif %}"
            href="{{ url_for('admin.manage_menu') }}">
           <i class="fa-solid fa-utensils me-2"></i> Management Menu
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.riwayat_pesanan' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.riwayat_pesanan' %}bg-white text-orange fw-bold{% else %}text-white{% endif %}"
            href="{{ url_for('admin.riwayat_pesanan') }}">
           <i class="fa-solid fa-receipt me-2"></i> Riwayat Pesanan
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_feedback' %}bg-white text-primary fw-bold{% else %}text-white{% endif %}"
+        <a class="nav-link px-3 py-2 rounded-2 {% if request.endpoint == 'admin.manage_feedback' %}bg-white text-orange fw-bold{% else %}text-white{% endif %}"
            href="{{ url_for('admin.manage_feedback') }}">
           <i class="fa-solid fa-comments me-2"></i> Riwayat Feedback
         </a>

@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 from extensions import db
-from models import MenuItem, Order, User
+from models import MenuItem, Order, User, OrderItem, Feedback
 import os
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash
+from sqlalchemy import func, extract
+from calendar import month_abbr  
+from dateutil.relativedelta import relativedelta
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -16,17 +19,264 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.route("/dashboard")
 @login_required
 def dashboard():
+    """Tampilan utama dashboard admin berisi ringkasan statistik dan grafik penjualan."""
+
+    # === Statistik Utama ===
     total_orders = Order.query.count()
-    total_sales = db.session.query(db.func.sum(Order.total)).scalar() or 0
+    total_sales = db.session.query(func.sum(Order.total)).scalar() or 0
     total_users = User.query.count()
     total_menu = MenuItem.query.count()
+    avg_order_value = db.session.query(func.avg(Order.total)).scalar() or 0
 
+    # === Statistik Tahunan ===
+    yearly_data = (
+        db.session.query(
+            extract("year", Order.created_at).label("year"),
+            func.sum(Order.total).label("total_sales"),
+            func.count(Order.id).label("total_orders")
+        )
+        .group_by("year")
+        .order_by("year")
+        .all()
+    )
+    years = [int(y) for y, _, _ in yearly_data]
+    yearly_sales = [int(t or 0) for _, t, _ in yearly_data]
+    yearly_orders = [int(o or 0) for _, _, o in yearly_data]
+
+    # === Statistik Bulanan (tahun berjalan) ===
+    current_year = datetime.now().year
+    monthly_data = (
+        db.session.query(
+            extract("month", Order.created_at).label("month"),
+            func.sum(Order.total).label("total_sales"),
+            func.count(Order.id).label("total_orders")
+        )
+        .filter(extract("year", Order.created_at) == current_year)
+        .group_by("month")
+        .order_by("month")
+        .all()
+    )
+
+    months = [month_abbr[m] for m in range(1, 13)]
+    monthly_sales = [0] * 12
+    monthly_orders = [0] * 12
+    for m, sales, orders in monthly_data:
+        monthly_sales[int(m) - 1] = int(sales or 0)
+        monthly_orders[int(m) - 1] = int(orders or 0)
+
+    # === Statistik Mingguan (7 hari terakhir) ===
+    today = datetime.now()
+    week_start = today - timedelta(days=6)
+    weekly_data = (
+        db.session.query(
+            func.date(Order.created_at).label("date"),
+            func.sum(Order.total).label("total_sales"),
+            func.count(Order.id).label("total_orders")
+        )
+        .filter(Order.created_at >= week_start)
+        .group_by(func.date(Order.created_at))
+        .order_by(func.date(Order.created_at))
+        .all()
+    )
+
+    week_days, week_sales, week_orders = [], [], []
+    for i in range(7):
+        day = (week_start + timedelta(days=i)).date()
+        label = day.strftime("%a")
+        week_days.append(label)
+
+        record = next((x for x in weekly_data if x[0] == day), None)
+        week_sales.append(int(record[1] or 0) if record else 0)
+        week_orders.append(int(record[2] or 0) if record else 0)
+
+    # === Statistik Harian ===
+    start_of_day = datetime(today.year, today.month, today.day)
+    end_of_day = start_of_day + timedelta(days=1)
+
+    daily_sales = (
+        db.session.query(func.sum(Order.total))
+        .filter(Order.created_at >= start_of_day, Order.created_at < end_of_day)
+        .scalar() or 0
+    )
+    daily_orders = (
+        db.session.query(func.count(Order.id))
+        .filter(Order.created_at >= start_of_day, Order.created_at < end_of_day)
+        .scalar() or 0
+    )
+
+    # === Menu Terlaris ===
+    top_menu = (
+        db.session.query(
+            MenuItem.name,
+            func.sum(OrderItem.quantity).label("total_qty")
+        )
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .group_by(MenuItem.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .limit(5)
+        .all()
+    )
+    top_menu_labels = [item.name for item in top_menu]
+    top_menu_counts = [int(item.total_qty) for item in top_menu]
+    menu_pairs = list(zip(top_menu_labels, top_menu_counts))
+
+    # === Menu dengan Pendapatan Tertinggi ===
+    top_revenue_menu = (
+        db.session.query(
+            MenuItem.name,
+            func.sum(OrderItem.quantity * MenuItem.price).label("revenue")
+        )
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .group_by(MenuItem.name)
+        .order_by(func.sum(OrderItem.quantity * MenuItem.price).desc())
+        .first()
+    )
+    top_revenue_menu_name = top_revenue_menu.name if top_revenue_menu else "Belum ada data"
+    top_revenue_amount = top_revenue_menu.revenue if top_revenue_menu else 0
+
+    # === Rata-rata Rating Pelanggan ===
+    avg_rating = db.session.query(func.avg(Feedback.rating)).scalar() or 0
+
+    # === Pertumbuhan Penjualan (minggu ke minggu) ===
+    this_week_start = today - timedelta(days=today.weekday())  # Senin minggu ini
+    last_week_start = this_week_start - timedelta(days=7)
+    last_week_end = this_week_start - timedelta(seconds=1)
+
+    this_week_sales = (
+        db.session.query(func.sum(Order.total))
+        .filter(Order.created_at >= this_week_start)
+        .scalar() or 0
+    )
+    last_week_sales = (
+        db.session.query(func.sum(Order.total))
+        .filter(Order.created_at.between(last_week_start, last_week_end))
+        .scalar() or 0
+    )
+    sales_growth = ((this_week_sales - last_week_sales) / last_week_sales * 100) if last_week_sales > 0 else 0
+
+    # === Jam Ramai (Peak Hours) ===
+    peak_hours = (
+        db.session.query(
+            extract("hour", Order.created_at).label("hour"),
+            func.count(Order.id).label("order_count")
+        )
+        .group_by("hour")
+        .order_by("hour")
+        .all()
+    )
+
+    # Jam ramai tahun ini
+    peak_year = (
+        db.session.query(
+            extract("hour", Order.created_at).label("hour"),
+            func.count(Order.id).label("count")
+        )
+        .filter(extract("year", Order.created_at) == current_year)
+        .group_by("hour")
+        .order_by("hour")
+        .all()
+    )
+    peak_hours_year = [0] * 24
+    for h, c in peak_year:
+        peak_hours_year[int(h)] = int(c)
+
+    # Jam ramai bulan ini
+    current_month = datetime.now().month
+    peak_month = (
+        db.session.query(
+            extract("hour", Order.created_at).label("hour"),
+            func.count(Order.id).label("count")
+        )
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .group_by("hour")
+        .order_by("hour")
+        .all()
+    )
+    peak_hours_month = [0] * 24
+    for h, c in peak_month:
+        peak_hours_month[int(h)] = int(c)
+
+    # Jam ramai minggu ini
+    peak_week = (
+        db.session.query(
+            extract("hour", Order.created_at).label("hour"),
+            func.count(Order.id).label("count")
+        )
+        .filter(Order.created_at >= week_start)
+        .group_by("hour")
+        .order_by("hour")
+        .all()
+    )
+    peak_hours_week = [0] * 24
+    for h, c in peak_week:
+        peak_hours_week[int(h)] = int(c)
+
+    # Jam ramai hari ini
+    peak_day = (
+        db.session.query(
+            extract("hour", Order.created_at).label("hour"),
+            func.count(Order.id).label("count")
+        )
+        .filter(Order.created_at >= start_of_day, Order.created_at < end_of_day)
+        .group_by("hour")
+        .order_by("hour")
+        .all()
+    )
+    peak_hours_day = [0] * 24
+    for h, c in peak_day:
+        peak_hours_day[int(h)] = int(c)
+        
+    peak_hour = None
+    if any(peak_hours):
+        top_hour = peak_hours.index(max(peak_hours))
+        peak_hour = f"{top_hour:02d}:00"
+
+    # === Insight Cepat (teks otomatis) ===
+    insight_text = (
+        f"Menu paling menguntungkan bulan ini: {top_revenue_menu_name} | "
+        f"Penjualan {'meningkat' if sales_growth >= 0 else 'menurun'} {abs(sales_growth):.1f}% dibanding minggu lalu | "
+        f"Puncak pesanan terjadi pukul {peak_hour or '-'}"
+    )
+
+    # === Render Template ===
     return render_template(
         "pages/admin/admin_dashboard.html",
         total_orders=total_orders,
         total_sales=total_sales,
         total_users=total_users,
-        total_menu=total_menu
+        total_menu=total_menu,
+
+        years=years,
+        yearly_sales=yearly_sales,
+        yearly_orders=yearly_orders,
+
+        months=months,
+        monthly_sales=monthly_sales,
+        monthly_orders=monthly_orders,
+
+        week_days=week_days,
+        week_sales=week_sales,
+        week_orders=week_orders,
+
+        daily_sales=daily_sales,
+        daily_orders=daily_orders,
+
+        top_menu_labels=top_menu_labels,
+        top_menu_counts=top_menu_counts,
+        menu_pairs=menu_pairs,
+
+        avg_order_value=avg_order_value,
+        top_revenue_menu_name=top_revenue_menu_name,
+        top_revenue_amount=top_revenue_amount,
+        avg_rating=avg_rating,
+        sales_growth=sales_growth,
+        peak_hours_year=peak_hours_year,
+        peak_hours_month=peak_hours_month,
+        peak_hours_week=peak_hours_week,
+        peak_hours_day=peak_hours_day,
+        peak_hour=peak_hour,
+        insight_text=insight_text,
     )
 
 # ========================

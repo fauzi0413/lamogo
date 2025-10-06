@@ -23,14 +23,25 @@ a:hover {
   text-decoration: underline;
 }
 
-/* ===============================
-   HEADER & FOOTER
-   =============================== */
 .bg-orange {
   background-color: #ff5722 !important; /* Warna oranye */
   color: white !important; /* Warna teks putih */
 }
- 
+
+.text-orange {
+  color: #ff5722 !important; /* Warna oranye */
+}
+
+.btn-group .btn.active {
+  background-color: #ff7b00;
+  border-color: #ff7b00;
+  color: white;
+}
+
+/* ===============================
+   HEADER & FOOTER
+   =============================== */
+
 footer {
   background: #eee;
   color: #555;

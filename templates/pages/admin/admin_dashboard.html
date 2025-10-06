@@ -1,21 +1,33 @@
-
 {% extends "base.html" %}
-
 {% block title %}Dashboard Admin{% endblock %}
+
 {% block content %}
 <div class="admin-container">
   {% include "sidebar.html" %}
 
   <main class="main-content">
-    <div class="header-actions">
-      <h2>Dashboard Admin</h2> 
+
+    <!-- === INSIGHT CEPAT (dipindah ke atas) === -->
+    <div class="alert alert-light border shadow-sm d-flex align-items-center gap-3 p-3 mb-4"
+         style="background: #fffaf3; border-left: 6px solid #ff7b00;">
+      <div class="fs-3 text-orange">💡</div>
+      <div>
+        <h6 class="fw-bold text-orange mb-1">Insight Cepat</h6>
+        <p class="mb-0 small text-dark">{{ insight_text }}</p>
+      </div>
     </div>
 
+    <!-- === HEADER === -->
+    <div class="header-actions mb-3">
+      <h2>Dashboard Admin</h2>
+    </div>
+
+    <!-- === KARTU STATISTIK UTAMA === -->
     <div class="row g-3">
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
-            <h6 class="text-primary fw-bold">Total Pesanan</h6>
+            <h6 class="text-orange fw-bold">Total Pesanan</h6>
             <p class="fs-5 mb-0">{{ total_orders }}</p>
           </div>
         </div>
@@ -23,7 +35,7 @@
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
-            <h6 class="text-primary fw-bold">Total Penjualan</h6>
+            <h6 class="text-orange fw-bold">Total Penjualan</h6>
             <p class="fs-5 mb-0">{{ total_sales|rupiah }}</p>
           </div>
         </div>
@@ -31,7 +43,7 @@
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
-            <h6 class="text-primary fw-bold">Total User</h6>
+            <h6 class="text-orange fw-bold">Total User</h6>
             <p class="fs-5 mb-0">{{ total_users }}</p>
           </div>
         </div>
@@ -39,13 +51,228 @@
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
-            <h6 class="text-primary fw-bold">Total Menu</h6>
+            <h6 class="text-orange fw-bold">Total Menu</h6>
             <p class="fs-5 mb-0">{{ total_menu }}</p>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- === STATISTIK TAMBAHAN === -->
+    <div class="row g-3 mt-3">
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-orange fw-bold">💰 Rata-rata Transaksi</h6>
+            <p class="fs-5 mb-0">{{ avg_order_value|rupiah }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-orange fw-bold">⭐ Rata-rata Rating</h6>
+            <p class="fs-5 mb-0">{{ "%.1f"|format(avg_rating) }}/5</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-orange fw-bold">🕛 Jam Ramai</h6>
+            <p class="fs-5 mb-0">{{ peak_hour or '-' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-orange fw-bold">📈 Pertumbuhan Penjualan</h6>
+            <p class="fs-5 mb-0 {% if sales_growth >= 0 %}text-success{% else %}text-danger{% endif %}">
+              {{ "%.1f"|format(sales_growth) }}%
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === STATISTIK PENJUALAN & PESANAN === -->
+    <section class="mt-5">
+      <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="fw-bold mb-0">📊 Statistik Penjualan</h5>
+            <div class="btn-group" role="group" aria-label="Filter Grafik">
+              <button class="btn btn-sm btn-filter" id="btnYear">Tahun</button>
+              <button class="btn btn-sm btn-filter" id="btnMonth">Bulan</button>
+              <button class="btn btn-sm btn-filter" id="btnWeek">Minggu</button>
+              <button class="btn btn-sm btn-filter active" id="btnDay">Hari Ini</button>
+            </div>
+          </div>
+
+          <p class="text-muted mb-2" id="summarySales">
+            Total Penjualan: <strong>Rp {{ daily_sales|int|default(0)|string }}</strong>
+          </p>
+
+          <canvas id="salesChart" height="100"></canvas>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body">
+          <h5 class="fw-bold mb-4 text-start">🧾 Jumlah Pesanan</h5>
+          <p class="text-muted mb-2" id="summaryOrders">
+            Total Pesanan: <strong>{{ daily_orders }}</strong> Order
+          </p>
+          <canvas id="ordersChart" height="100"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- === PIE CHART MENU TERLARIS === -->
+    <div class="card shadow-sm border-0 rounded-3 mt-4">
+      <div class="card-body">
+        <h5 class="fw-bold mb-4">🍽️ Distribusi Menu Terjual</h5>
+        <div class="d-flex align-items-center justify-content-center flex-column flex-md-row gap-3 gap-md-2">
+          <div class="chart-container flex-shrink-0" style="width: 300px; height: 300px;">
+            <canvas id="menuChart"></canvas>
+          </div>
+          <ul class="list-unstyled text-start mb-0 ms-md-3">
+            {% for name, qty in menu_pairs %}
+            <li class="mb-1"><strong>{{ name }}</strong> — {{ qty }} terjual</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- === GRAFIK JAM RAMAI === -->
+    <div class="card shadow-sm border-0 rounded-3 mt-4 mb-5">
+      <div class="card-body">
+        <h5 class="fw-bold mb-4">🕒 Jam Ramai</h5>
+        <div class="chart-container" style="width: 100%; height: 350px;">
+          <canvas id="peakHourChart"></canvas>
+        </div>
+        <p class="text-muted mt-3">
+          Jam dengan pesanan terbanyak: <span id="jamRamaiText"><strong>{{ peak_hour or '-' }}</strong></span>
+        </p>
+      </div>
+    </div>
   </main>
 </div>
- 
+
+<!-- === CHART.JS === -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const dataYear = { labels: {{ years|tojson|safe }}, sales: {{ yearly_sales|tojson|safe }}, orders: {{ yearly_orders|tojson|safe }} };
+  const dataMonth = { labels: {{ months|tojson|safe }}, sales: {{ monthly_sales|tojson|safe }}, orders: {{ monthly_orders|tojson|safe }} };
+  const dataWeek = { labels: {{ week_days|tojson|safe }}, sales: {{ week_sales|tojson|safe }}, orders: {{ week_orders|tojson|safe }} };
+  const dataDay = { labels: ["Hari Ini"], sales: [{{ daily_sales or 0 }}], orders: [{{ daily_orders or 0 }}] };
+
+  function updateSummary(type, salesData, orderData) {
+    const totalSales = salesData.reduce((a, b) => a + b, 0);
+    const totalOrders = orderData.reduce((a, b) => a + b, 0);
+    document.getElementById("summarySales").innerHTML = `Total Penjualan: <strong>Rp ${totalSales.toLocaleString("id-ID")}</strong>`;
+    document.getElementById("summaryOrders").innerHTML = `Total Pesanan: <strong>${totalOrders}</strong> Order`;
+  }
+
+  // === Grafik Penjualan ===
+  const salesCtx = document.getElementById('salesChart').getContext('2d');
+  const salesChart = new Chart(salesCtx, {
+    type: 'line',
+    data: { labels: dataDay.labels, datasets: [{ label: 'Total Penjualan (Rp)', data: dataDay.sales, borderColor: '#ff7b00', backgroundColor: 'rgba(255,123,0,0.2)', borderWidth: 2, tension: 0.3, fill: true }] },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  // === Grafik Pesanan ===
+  const orderCtx = document.getElementById('ordersChart').getContext('2d');
+  const ordersChart = new Chart(orderCtx, {
+    type: 'line',
+    data: { labels: dataDay.labels, datasets: [{ label: 'Jumlah Pesanan', data: dataDay.orders, borderColor: '#007bff', backgroundColor: 'rgba(0,123,255,0.1)', borderWidth: 2, tension: 0.3, fill: true }] },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+  });
+
+  // === Filter Chart + Update Summary ===
+  const filters = { btnYear: dataYear, btnMonth: dataMonth, btnWeek: dataWeek, btnDay: dataDay };
+  Object.keys(filters).forEach(id => {
+    document.getElementById(id).addEventListener('click', function() {
+      document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+      this.classList.add('active');
+      const newData = filters[id];
+      salesChart.data.labels = newData.labels;
+      salesChart.data.datasets[0].data = newData.sales;
+      salesChart.update();
+      ordersChart.data.labels = newData.labels;
+      ordersChart.data.datasets[0].data = newData.orders;
+      ordersChart.update();
+      updateSummary(id, newData.sales, newData.orders);
+    });
+  });
+
+  // === PIE CHART MENU TERLARIS ===
+  const menuCtx = document.getElementById('menuChart').getContext('2d');
+  new Chart(menuCtx, {
+    type: 'doughnut',
+    data: { labels: {{ top_menu_labels|tojson|safe }}, datasets: [{ label: 'Jumlah Terjual', data: {{ top_menu_counts|tojson|safe }}, backgroundColor: ['#E63946', '#457B9D', '#2A9D8F', '#F4A261', '#8A2BE2', '#FFB703', '#1D3557'], borderColor: '#fff', borderWidth: 2 }] },
+    options: { responsive: true, animation: { duration: 1200 }, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 13 }, formatter: (v, ctx) => ((v / ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0)) * 100).toFixed(1) + '%' } } },
+    plugins: [ChartDataLabels]
+  });
+
+  // === GRAFIK JAM RAMAI ===
+  const peakCtx = document.getElementById('peakHourChart').getContext('2d');
+
+  // Dataset per periode
+  const peakYear = {{ peak_hours_year|tojson|safe }};
+  const peakMonth = {{ peak_hours_month|tojson|safe }};
+  const peakWeek = {{ peak_hours_week|tojson|safe }};
+  const peakDay = {{ peak_hours_day|tojson|safe }};
+
+  let peakChart = new Chart(peakCtx, {
+    type: 'bar',
+    data: {
+      labels: [...Array(24).keys()].map(h => `${h.toString().padStart(2, '0')}:00`),
+      datasets: [{
+        label: 'Jumlah Pesanan',
+        data: peakDay,
+        backgroundColor: 'rgba(255,123,0,0.6)',
+        borderColor: '#ff7b00',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // === Sinkronkan dengan tombol filter ===
+  const peakData = { btnYear: peakYear, btnMonth: peakMonth, btnWeek: peakWeek, btnDay: peakDay };
+
+  Object.keys(peakData).forEach(id => {
+    document.getElementById(id).addEventListener('click', function() {
+      const newPeak = peakData[id];
+      peakChart.data.datasets[0].data = newPeak;
+      peakChart.update();
+
+      // Tampilkan jam paling ramai di bawah chart
+      const maxIndex = newPeak.indexOf(Math.max(...newPeak));
+      const jamRamai = maxIndex >= 0 && newPeak[maxIndex] > 0 ? `${String(maxIndex).padStart(2, '0')}:00` : '-';
+      document.querySelector("#jamRamaiText").innerHTML = `<strong>${jamRamai}</strong>`;
+    });
+  });
+
+});
+</script>
+
+<style>
+.text-orange { color: #ff7b00; }
+.btn-filter { background-color: #ddd; color: #333; font-weight: 500; }
+.btn-filter.active { background-color: #ff7b00 !important; color: #fff !important; }
+.chart-container { display: flex; align-items: center; justify-content: center; }
+@media (min-width: 768px) { .d-flex.flex-md-row { gap: 1rem !important; } }
+@media (max-width: 767px) { .chart-container { width: 90% !important; margin-bottom: 1rem; } }
+</style>
 {% endblock %}
