@@ -20,14 +20,15 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @login_required
 def dashboard():
     """Tampilan utama dashboard admin berisi ringkasan statistik dan grafik penjualan."""
+    
+    current_year = datetime.now().year 
+    current_month = datetime.now().month
 
     # === Statistik Utama ===
-    total_orders = Order.query.count()
-    total_sales = db.session.query(func.sum(Order.total)).scalar() or 0
     total_users = User.query.count()
     total_menu = MenuItem.query.count()
-    avg_order_value = db.session.query(func.avg(Order.total)).scalar() or 0
 
+    
     # === Statistik Tahunan ===
     yearly_data = (
         db.session.query(
@@ -44,7 +45,6 @@ def dashboard():
     yearly_orders = [int(o or 0) for _, _, o in yearly_data]
 
     # === Statistik Bulanan (tahun berjalan) ===
-    current_year = datetime.now().year
     monthly_data = (
         db.session.query(
             extract("month", Order.created_at).label("month"),
@@ -104,6 +104,73 @@ def dashboard():
         .scalar() or 0
     )
 
+
+    # === Distribusi Menu Terjual per Periode === 
+    # 📆 Per tahun
+    menu_year_data = (
+        db.session.query(
+            MenuItem.name,
+            func.sum(OrderItem.quantity).label("total_qty")
+        )
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .filter(extract("year", Order.created_at) == current_year)
+        .group_by(MenuItem.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .all()
+    )
+    menu_year_labels = [m.name for m in menu_year_data]
+    menu_year_counts = [int(m.total_qty) for m in menu_year_data]
+
+    # 📆 Per bulan
+    menu_month_data = (
+        db.session.query(
+            MenuItem.name,
+            func.sum(OrderItem.quantity).label("total_qty")
+        )
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .group_by(MenuItem.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .all()
+    )
+    menu_month_labels = [m.name for m in menu_month_data]
+    menu_month_counts = [int(m.total_qty) for m in menu_month_data]
+
+    # 📆 Per minggu
+    menu_week_data = (
+        db.session.query(
+            MenuItem.name,
+            func.sum(OrderItem.quantity).label("total_qty")
+        )
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .filter(Order.created_at >= week_start)
+        .group_by(MenuItem.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .all()
+    )
+    menu_week_labels = [m.name for m in menu_week_data]
+    menu_week_counts = [int(m.total_qty) for m in menu_week_data]
+
+    # 📆 Per hari
+    menu_day_data = (
+        db.session.query(
+            MenuItem.name,
+            func.sum(OrderItem.quantity).label("total_qty")
+        )
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .filter(Order.created_at >= start_of_day, Order.created_at < end_of_day)
+        .group_by(MenuItem.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .all()
+    )
+    menu_day_labels = [m.name for m in menu_day_data]
+    menu_day_counts = [int(m.total_qty) for m in menu_day_data]
+
     # === Menu Terlaris ===
     top_menu = (
         db.session.query(
@@ -120,6 +187,8 @@ def dashboard():
     top_menu_counts = [int(item.total_qty) for item in top_menu]
     menu_pairs = list(zip(top_menu_labels, top_menu_counts))
 
+
+
     # === Menu dengan Pendapatan Tertinggi ===
     top_revenue_menu = (
         db.session.query(
@@ -133,26 +202,138 @@ def dashboard():
     )
     top_revenue_menu_name = top_revenue_menu.name if top_revenue_menu else "Belum ada data"
     top_revenue_amount = top_revenue_menu.revenue if top_revenue_menu else 0
+    # 💰 Hitung total revenue semua menu bulan ini
+    total_revenue_month = (
+        db.session.query(func.sum(OrderItem.quantity * MenuItem.price))
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .scalar() or 0
+    )
+
+    # 📊 Hitung persentase kontribusi menu teratas
+    top_menu_profit_percentage = (
+        (top_revenue_amount / total_revenue_month * 100) if total_revenue_month > 0 else 0
+    )
+
 
     # === Rata-rata Rating Pelanggan ===
     avg_rating = db.session.query(func.avg(Feedback.rating)).scalar() or 0
 
-    # === Pertumbuhan Penjualan (minggu ke minggu) ===
+    # === Pertumbuhan Penjualan (minggu ke minggu, per hari ke-N) ===
     this_week_start = today - timedelta(days=today.weekday())  # Senin minggu ini
-    last_week_start = this_week_start - timedelta(days=7)
-    last_week_end = this_week_start - timedelta(seconds=1)
+    days_elapsed = (today - this_week_start).days  # berapa hari minggu ini sudah berjalan
 
+    # 🗓️ Hitung akhir periode yang sama minggu lalu
+    last_week_start = this_week_start - timedelta(days=7)
+    last_week_same_period_end = last_week_start + timedelta(days=days_elapsed)
+
+    # 💰 Total penjualan minggu ini (Senin → sekarang)
     this_week_sales = (
         db.session.query(func.sum(Order.total))
         .filter(Order.created_at >= this_week_start)
         .scalar() or 0
     )
-    last_week_sales = (
+
+    # 💰 Total penjualan minggu lalu (Senin → hari yang sama)
+    last_week_sales_same_period = (
         db.session.query(func.sum(Order.total))
-        .filter(Order.created_at.between(last_week_start, last_week_end))
+        .filter(Order.created_at.between(last_week_start, last_week_same_period_end))
         .scalar() or 0
     )
-    sales_growth = ((this_week_sales - last_week_sales) / last_week_sales * 100) if last_week_sales > 0 else 0
+    
+    # === 📊 Pertumbuhan Penjualan Bulanan ===
+    # Total penjualan bulan ini
+    this_month_sales = (
+        db.session.query(func.sum(Order.total))
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .scalar() or 0
+    )
+
+    # Total penjualan bulan lalu
+    last_month = current_month - 1 if current_month > 1 else 12
+    last_month_year = current_year if current_month > 1 else current_year - 1
+
+    # 💡 Total pesanan bulan ini
+    total_orders = (
+        db.session.query(func.count(Order.id))
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .scalar() or 0
+    )
+    # 📊 Total pesanan bulan lalu
+    last_month_orders = (
+        db.session.query(func.count(Order.id))
+        .filter(extract("year", Order.created_at) == last_month_year)
+        .filter(extract("month", Order.created_at) == last_month)
+        .scalar() or 0
+    )
+
+    # 📈 Pertumbuhan pesanan
+    orders_growth = ((total_orders - last_month_orders) / last_month_orders * 100) if last_month_orders > 0 else 0
+
+    total_sales = (
+        db.session.query(func.sum(Order.total))
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .scalar() or 0
+    )
+
+    avg_order_value = (
+        db.session.query(func.avg(Order.total))
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .scalar() or 0
+    ) 
+
+    last_month_sales = (
+        db.session.query(func.sum(Order.total))
+        .filter(extract("year", Order.created_at) == last_month_year)
+        .filter(extract("month", Order.created_at) == last_month)
+        .scalar() or 0
+    )
+
+    # Hitung pertumbuhan penjualan berdasarkan bulan (jika bulan lalu > 0)
+    if last_month_sales > 0:
+        sales_growth = ((this_month_sales - last_month_sales) / last_month_sales) * 100
+    else:
+        sales_growth = 0
+        
+    # === 📊 Pertumbuhan Total Pesanan ===
+    this_month_orders = (
+        db.session.query(func.count(Order.id))
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .scalar() or 0
+    )
+
+    last_month_orders = (
+        db.session.query(func.count(Order.id))
+        .filter(extract("year", Order.created_at) == last_month_year)
+        .filter(extract("month", Order.created_at) == last_month)
+        .scalar() or 0
+    )
+
+    orders_growth = ((this_month_orders - last_month_orders) / last_month_orders * 100) if last_month_orders > 0 else 0
+
+    # === 📊 Pertumbuhan Rata-rata Transaksi ===
+    this_month_avg_order = (
+        db.session.query(func.avg(Order.total))
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .scalar() or 0
+    )
+
+    last_month_avg_order = (
+        db.session.query(func.avg(Order.total))
+        .filter(extract("year", Order.created_at) == last_month_year)
+        .filter(extract("month", Order.created_at) == last_month)
+        .scalar() or 0
+    )
+
+    avg_order_growth = ((this_month_avg_order - last_month_avg_order) / last_month_avg_order * 100) if last_month_avg_order > 0 else 0
 
     # === Jam Ramai (Peak Hours) ===
     peak_hours = (
@@ -160,10 +341,14 @@ def dashboard():
             extract("hour", Order.created_at).label("hour"),
             func.count(Order.id).label("order_count")
         )
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
         .group_by("hour")
-        .order_by("hour")
+        .order_by(func.count(Order.id).desc())
         .all()
     )
+
+    peak_hour = f"{int(peak_hours[0][0]):02d}:00" if peak_hours else "-"
 
     # Jam ramai tahun ini
     peak_year = (
@@ -181,7 +366,6 @@ def dashboard():
         peak_hours_year[int(h)] = int(c)
 
     # Jam ramai bulan ini
-    current_month = datetime.now().month
     peak_month = (
         db.session.query(
             extract("hour", Order.created_at).label("hour"),
@@ -227,18 +411,38 @@ def dashboard():
     for h, c in peak_day:
         peak_hours_day[int(h)] = int(c)
         
-    peak_hour = None
-    if any(peak_hours):
-        top_hour = peak_hours.index(max(peak_hours))
-        peak_hour = f"{top_hour:02d}:00"
-
     # === Insight Cepat (teks otomatis) ===
+    status_text = "meningkat" if sales_growth >= 0 else "menurun"
+    status_color = "text-success" if sales_growth >= 0 else "text-danger"
+
     insight_text = (
-        f"Menu paling menguntungkan bulan ini: {top_revenue_menu_name} | "
-        f"Penjualan {'meningkat' if sales_growth >= 0 else 'menurun'} {abs(sales_growth):.1f}% dibanding minggu lalu | "
-        f"Puncak pesanan terjadi pukul {peak_hour or '-'}"
+        f"Menu paling menguntungkan bulan ini: <strong>{top_revenue_menu_name}</strong> "
+        f"(<strong>{top_menu_profit_percentage:.1f}%</strong> dari total pendapatan bulan ini) | "
+        f"Penjualan <strong class='{status_color}'>{status_text}</strong> "
+        f"<strong class='{status_color}'>{abs(sales_growth):.1f}%</strong> dibanding bulan lalu | "
+        f"Puncak pesanan terjadi pukul <strong>{peak_hour or '-'}</strong>"
     )
 
+    # 🍽️ Menu terlaris bulan ini (berdasarkan jumlah terjual)
+    top_menu_month = (
+        db.session.query(
+            MenuItem.name,
+            func.sum(OrderItem.quantity).label("total_qty")
+        )
+        .join(MenuItem, OrderItem.menu_item_id == MenuItem.id)
+        .join(Order, OrderItem.order_id == Order.id)
+        .filter(extract("year", Order.created_at) == current_year)
+        .filter(extract("month", Order.created_at) == current_month)
+        .group_by(MenuItem.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .first()
+    )
+
+    # Jika ada hasil
+    top_menu_name = top_menu_month.name if top_menu_month else None
+    top_menu_qty = int(top_menu_month.total_qty) if top_menu_month else 0
+
+    
     # === Render Template ===
     return render_template(
         "pages/admin/admin_dashboard.html",
@@ -265,18 +469,36 @@ def dashboard():
         top_menu_labels=top_menu_labels,
         top_menu_counts=top_menu_counts,
         menu_pairs=menu_pairs,
+        top_menu_name=top_menu_name,
+        top_menu_qty=top_menu_qty,
 
         avg_order_value=avg_order_value,
+        avg_rating=avg_rating,
+
         top_revenue_menu_name=top_revenue_menu_name,
         top_revenue_amount=top_revenue_amount,
-        avg_rating=avg_rating,
+        top_menu_profit_percentage=top_menu_profit_percentage,
+        
         sales_growth=sales_growth,
+        orders_growth=orders_growth,
+        avg_order_growth=avg_order_growth,
+
         peak_hours_year=peak_hours_year,
         peak_hours_month=peak_hours_month,
         peak_hours_week=peak_hours_week,
         peak_hours_day=peak_hours_day,
         peak_hour=peak_hour,
         insight_text=insight_text,
+
+        menu_year_labels=menu_year_labels,
+        menu_year_counts=menu_year_counts,
+        menu_month_labels=menu_month_labels,
+        menu_month_counts=menu_month_counts,
+        menu_week_labels=menu_week_labels,
+        menu_week_counts=menu_week_counts,
+        menu_day_labels=menu_day_labels,
+        menu_day_counts=menu_day_counts,
+
     )
 
 # ========================

@@ -8,38 +8,81 @@
   <main class="main-content">
 
     <!-- === INSIGHT CEPAT (dipindah ke atas) === -->
-    <div class="alert alert-light border shadow-sm d-flex align-items-center gap-3 p-3 mb-4"
+    <div class="alert alert-light border shadow-sm d-flex align-items-center gap-3 p-3 "
          style="background: #fffaf3; border-left: 6px solid #ff7b00;">
       <div class="fs-3 text-orange">💡</div>
       <div>
         <h6 class="fw-bold text-orange mb-1">Insight Cepat</h6>
-        <p class="mb-0 small text-dark">{{ insight_text }}</p>
+        <p class="mb-0 small text-dark">{{ insight_text | safe }}</p>
       </div>
     </div>
 
     <!-- === HEADER === -->
-    <div class="header-actions mb-3">
+    <div class="header-actions my-3">
       <h2>Dashboard Admin</h2>
     </div>
 
     <!-- === KARTU STATISTIK UTAMA === -->
     <div class="row g-3">
+      
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
-            <h6 class="text-orange fw-bold">Total Pesanan</h6>
-            <p class="fs-5 mb-0">{{ total_orders }}</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm border-0 rounded-3">
-          <div class="card-body">
-            <h6 class="text-orange fw-bold">Total Penjualan</h6>
+            <h6 class="text-orange fw-bold">Total Penjualan (per bulan)</h6>
             <p class="fs-5 mb-0">{{ total_sales|rupiah }}</p>
+            {% if sales_growth > 0 %}
+              <p class="small text-success"><i class="fas fa-arrow-up"></i> {{ "%.1f"|format(sales_growth) }}%</p>
+            {% elif sales_growth < 0 %}
+              <p class="small text-danger"><i class="fas fa-arrow-down"></i> {{ "%.1f"|format(sales_growth) }}%</p>
+            {% else %}
+              <p class="small text-muted"><i class="fas fa-minus"></i> 0.0%</p>
+            {% endif %}
           </div>
         </div>
       </div>
+
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-orange fw-bold">Rata-rata Transaksi (per bulan)</h6>
+            <p class="fs-5 mb-0">{{ avg_order_value|rupiah }}</p>
+            {% if avg_order_growth > 0 %}
+              <p class="small text-success"><i class="fas fa-arrow-up"></i> {{ "%.1f"|format(avg_order_growth) }}%</p>
+            {% elif avg_order_growth < 0 %}
+              <p class="small text-danger"><i class="fas fa-arrow-down"></i> {{ "%.1f"|format(avg_order_growth) }}%</p>
+            {% else %}
+              <p class="small text-muted"><i class="fas fa-minus"></i> 0.0%</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-orange fw-bold">Total Pesanan (per bulan)</h6>
+            <p class="fs-5 mb-0">{{ total_orders }}</p>
+
+            {% if orders_growth > 0 %}
+              <p class="small text-success"><i class="fas fa-arrow-up"></i> {{ "%.1f"|format(orders_growth) }}%</p>
+            {% elif orders_growth < 0 %}
+              <p class="small text-danger"><i class="fas fa-arrow-down"></i> {{ "%.1f"|format(orders_growth) }}%</p>
+            {% else %}
+              <p class="small text-muted"><i class="fas fa-minus"></i> 0.0%</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-sm-6">
+        <div class="card text-center shadow-sm border-0 rounded-3">
+          <div class="card-body">
+            <h6 class="text-orange fw-bold">Rata-rata Rating</h6>
+            <p class="fs-5 mb-0">{{ "%.1f"|format(avg_rating) }}/5</p>
+          </div>
+        </div>
+      </div>
+      
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
@@ -48,6 +91,7 @@
           </div>
         </div>
       </div>
+
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
@@ -56,46 +100,32 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- === STATISTIK TAMBAHAN === -->
-    <div class="row g-3 mt-3">
+      
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
-            <h6 class="text-orange fw-bold">💰 Rata-rata Transaksi</h6>
-            <p class="fs-5 mb-0">{{ avg_order_value|rupiah }}</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm border-0 rounded-3">
-          <div class="card-body">
-            <h6 class="text-orange fw-bold">⭐ Rata-rata Rating</h6>
-            <p class="fs-5 mb-0">{{ "%.1f"|format(avg_rating) }}/5</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3 col-sm-6">
-        <div class="card text-center shadow-sm border-0 rounded-3">
-          <div class="card-body">
-            <h6 class="text-orange fw-bold">🕛 Jam Ramai</h6>
+            <h6 class="text-orange fw-bold">Jam Ramai (per bulan)</h6>
             <p class="fs-5 mb-0">{{ peak_hour or '-' }}</p>
           </div>
         </div>
       </div>
+
       <div class="col-md-3 col-sm-6">
         <div class="card text-center shadow-sm border-0 rounded-3">
           <div class="card-body">
-            <h6 class="text-orange fw-bold">📈 Pertumbuhan Penjualan</h6>
-            <p class="fs-5 mb-0 {% if sales_growth >= 0 %}text-success{% else %}text-danger{% endif %}">
-              {{ "%.1f"|format(sales_growth) }}%
-            </p>
+            <h6 class="text-orange fw-bold">Menu Terlaris (per bulan)</h6>
+            <p class="fs-5 mb-0">{{ top_menu_name or '-' }}</p>
+            {% if top_menu_qty > 0 %}
+              <p class="small text-muted">Terjual: {{ top_menu_qty }} kali</p>
+            {% else %}
+              <p class="small text-muted">Belum ada pesanan</p>
+            {% endif %}
           </div>
         </div>
-      </div>
-    </div>
+      </div> 
 
+    </div>
+ 
     <!-- === STATISTIK PENJUALAN & PESANAN === -->
     <section class="mt-5">
       <div class="card shadow-sm border-0 rounded-3 mb-4">
@@ -111,7 +141,7 @@
           </div>
 
           <p class="text-muted mb-2" id="summarySales">
-            Total Penjualan: <strong>Rp {{ daily_sales|int|default(0)|string }}</strong>
+            Total Penjualan: <strong>{{ daily_sales|default(0)|rupiah }}</strong>
           </p>
 
           <canvas id="salesChart" height="100"></canvas>
@@ -120,7 +150,7 @@
 
       <div class="card shadow-sm border-0 rounded-3">
         <div class="card-body">
-          <h5 class="fw-bold mb-4 text-start">🧾 Jumlah Pesanan</h5>
+          <h5 class="fw-bold mb-4">🧾 Jumlah Pesanan</h5>
           <p class="text-muted mb-2" id="summaryOrders">
             Total Pesanan: <strong>{{ daily_orders }}</strong> Order
           </p>
@@ -137,11 +167,7 @@
           <div class="chart-container flex-shrink-0" style="width: 300px; height: 300px;">
             <canvas id="menuChart"></canvas>
           </div>
-          <ul class="list-unstyled text-start mb-0 ms-md-3">
-            {% for name, qty in menu_pairs %}
-            <li class="mb-1"><strong>{{ name }}</strong> — {{ qty }} terjual</li>
-            {% endfor %}
-          </ul>
+          <ul class="list-unstyled text-start mb-0 ms-md-3" id="menuList"></ul>
         </div>
       </div>
     </div>
@@ -199,8 +225,11 @@ document.addEventListener("DOMContentLoaded", function() {
   const filters = { btnYear: dataYear, btnMonth: dataMonth, btnWeek: dataWeek, btnDay: dataDay };
   Object.keys(filters).forEach(id => {
     document.getElementById(id).addEventListener('click', function() {
+      // 🔄 Ubah tampilan tombol aktif
       document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
       this.classList.add('active');
+
+      // === 📊 Update grafik penjualan & pesanan ===
       const newData = filters[id];
       salesChart.data.labels = newData.labels;
       salesChart.data.datasets[0].data = newData.sales;
@@ -209,18 +238,76 @@ document.addEventListener("DOMContentLoaded", function() {
       ordersChart.data.datasets[0].data = newData.orders;
       ordersChart.update();
       updateSummary(id, newData.sales, newData.orders);
+
+      // === 🍕 Update distribusi menu ===
+      const menuKey = id.replace("btn", "btnMenu"); // otomatis ubah btnYear -> btnMenuYear
+      const newMenuData = menuDataSets[menuKey];
+      if (newMenuData) {
+        menuChart.data.labels = newMenuData.labels;
+        menuChart.data.datasets[0].data = newMenuData.data;
+        menuChart.update();
+        updateMenuList(newMenuData.labels, newMenuData.data);
+      }
+
+      // === 🕒 Update grafik jam ramai ===
+      const newPeak = peakData[id];
+      peakChart.data.labels = [...Array(24).keys()].map(h => `${h.toString().padStart(2, '0')}:00`);
+      peakChart.data.datasets[0].data = newPeak;
+      peakChart.update();
+
+      // 🧠 Update teks jam paling ramai
+      const maxIndex = newPeak.indexOf(Math.max(...newPeak));
+      const jamRamai = maxIndex >= 0 && newPeak[maxIndex] > 0 
+        ? `${String(maxIndex).padStart(2, '0')}:00`
+        : '-';
+      document.querySelector("#jamRamaiText").innerHTML = `<strong>${jamRamai}</strong>`;
     });
   });
 
-  // === PIE CHART MENU TERLARIS ===
+  // === DATA DISTRIBUSI MENU ===
+  const menuDataSets = {
+    btnMenuYear: { labels: {{ menu_year_labels|tojson|safe }}, data: {{ menu_year_counts|tojson|safe }} },
+    btnMenuMonth: { labels: {{ menu_month_labels|tojson|safe }}, data: {{ menu_month_counts|tojson|safe }} },
+    btnMenuWeek: { labels: {{ menu_week_labels|tojson|safe }}, data: {{ menu_week_counts|tojson|safe }} },
+    btnMenuDay: { labels: {{ menu_day_labels|tojson|safe }}, data: {{ menu_day_counts|tojson|safe }} },
+  };
+
+  // === Inisialisasi Chart ===
   const menuCtx = document.getElementById('menuChart').getContext('2d');
-  new Chart(menuCtx, {
+  let menuChart = new Chart(menuCtx, {
     type: 'doughnut',
-    data: { labels: {{ top_menu_labels|tojson|safe }}, datasets: [{ label: 'Jumlah Terjual', data: {{ top_menu_counts|tojson|safe }}, backgroundColor: ['#E63946', '#457B9D', '#2A9D8F', '#F4A261', '#8A2BE2', '#FFB703', '#1D3557'], borderColor: '#fff', borderWidth: 2 }] },
-    options: { responsive: true, animation: { duration: 1200 }, plugins: { legend: { position: 'right' }, datalabels: { color: '#fff', font: { weight: 'bold', size: 13 }, formatter: (v, ctx) => ((v / ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0)) * 100).toFixed(1) + '%' } } },
+    data: {
+      labels: menuDataSets.btnMenuDay.labels,
+      datasets: [{
+        label: 'Jumlah Terjual',
+        data: menuDataSets.btnMenuDay.data,
+        backgroundColor: ['#E63946', '#457B9D', '#2A9D8F', '#F4A261', '#8A2BE2', '#FFB703', '#1D3557'],
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 1200 },
+      plugins: {
+        legend: { position: 'right' },
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: 13 },
+          formatter: (v, ctx) => ((v / ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0)) * 100).toFixed(1) + '%'
+        }
+      }
+    },
     plugins: [ChartDataLabels]
   });
 
+  // === Update daftar menu samping ===
+  function updateMenuList(labels, data) {
+    const list = labels.map((label, i) => `<li class="mb-1"><strong>${label}</strong> — ${data[i]} terjual</li>`).join('');
+    document.getElementById("menuList").innerHTML = list || "<li>Belum ada data</li>";
+  }
+  updateMenuList(menuDataSets.btnMenuDay.labels, menuDataSets.btnMenuDay.data);
+  
   // === GRAFIK JAM RAMAI ===
   const peakCtx = document.getElementById('peakHourChart').getContext('2d');
 
@@ -229,6 +316,13 @@ document.addEventListener("DOMContentLoaded", function() {
   const peakMonth = {{ peak_hours_month|tojson|safe }};
   const peakWeek = {{ peak_hours_week|tojson|safe }};
   const peakDay = {{ peak_hours_day|tojson|safe }};
+
+  const peakData = { 
+    btnYear: peakYear, 
+    btnMonth: peakMonth, 
+    btnWeek: peakWeek, 
+    btnDay: peakDay 
+  };
 
   let peakChart = new Chart(peakCtx, {
     type: 'bar',
@@ -248,22 +342,13 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // === Sinkronkan dengan tombol filter ===
-  const peakData = { btnYear: peakYear, btnMonth: peakMonth, btnWeek: peakWeek, btnDay: peakDay };
-
-  Object.keys(peakData).forEach(id => {
-    document.getElementById(id).addEventListener('click', function() {
-      const newPeak = peakData[id];
-      peakChart.data.datasets[0].data = newPeak;
-      peakChart.update();
-
-      // Tampilkan jam paling ramai di bawah chart
-      const maxIndex = newPeak.indexOf(Math.max(...newPeak));
-      const jamRamai = maxIndex >= 0 && newPeak[maxIndex] > 0 ? `${String(maxIndex).padStart(2, '0')}:00` : '-';
-      document.querySelector("#jamRamaiText").innerHTML = `<strong>${jamRamai}</strong>`;
-    });
-  });
-
+  // Set teks jam ramai awal (saat pertama kali halaman dimuat)
+  const maxIndexInit = peakDay.indexOf(Math.max(...peakDay));
+  const jamRamaiInit = maxIndexInit >= 0 && peakDay[maxIndexInit] > 0
+    ? `${String(maxIndexInit).padStart(2, '0')}:00`
+    : '-';
+  document.querySelector("#jamRamaiText").innerHTML = `<strong>${jamRamaiInit}</strong>`;
+  
 });
 </script>
 
