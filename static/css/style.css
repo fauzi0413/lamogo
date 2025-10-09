@@ -269,7 +269,7 @@ input, select,
 textarea {
   width: 100%;
   padding: 8px;
-  margin: 6px 0 12px 0;
+  /* margin: 6px 0 12px 0; */
   border: 1px solid #ccc;
   border-radius: 6px;
 }

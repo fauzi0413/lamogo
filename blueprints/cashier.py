@@ -51,9 +51,11 @@ def menu_search():
 def view_cart():
     cart = session.get("cart", {})
     items, total = [], 0
-    for id_str, qty in cart.items():
+    for id_str, qty_data in cart.items():
         item = MenuItem.query.get(int(id_str))
         if item:
+            # pastikan qty berupa angka
+            qty = qty_data["qty"] if isinstance(qty_data, dict) else qty_data
             items.append({
                 "id": item.id,
                 "name": item.name,
@@ -61,6 +63,7 @@ def view_cart():
                 "qty": qty
             })
             total += item.price * qty
+
     return render_template("pages/cashier/cart.html", items=items, total=total)
 
 
