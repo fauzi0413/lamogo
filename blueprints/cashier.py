@@ -56,11 +56,13 @@ def view_cart():
         if item:
             # pastikan qty berupa angka
             qty = qty_data["qty"] if isinstance(qty_data, dict) else qty_data
+            note = qty_data.get("note", "") if isinstance(qty_data, dict) else ""
             items.append({
                 "id": item.id,
                 "name": item.name,
                 "price": item.price,
-                "qty": qty
+                "qty": qty,
+                "note": note,
             })
             total += item.price * qty
 
@@ -96,10 +98,11 @@ def update_cart():
     cart = session.get("cart", {})
     for key in list(cart.keys()):
         qty = request.form.get(f"qty_{key}")
+        note = request.form.get(f"note_{key}", "").strip()
         if qty:
             qty = int(qty)
             if qty > 0:
-                cart[key] = qty
+                cart[key] = {"qty": qty, "note": note}
             else:
                 cart.pop(key, None)
     session["cart"] = cart
@@ -137,17 +140,30 @@ def checkout():
     db.session.flush()
 
     total = 0
-    for id_str, qty in cart.items():
+    
+    for id_str, item_data in cart.items():
         item = MenuItem.query.get(int(id_str))
-        if item:
-            db.session.add(OrderItem(
-                order_id=order.id,
-                menu_item_id=item.id,
-                quantity=qty,
-                price=item.price,
-                status="open"
-            ))
-            total += item.price * qty
+        if not item:
+            continue
+
+        if isinstance(item_data, dict):
+            qty = item_data.get("qty", 1)
+            note = item_data.get("note", "")
+        else:
+            qty = int(item_data)
+            note = ""
+
+        order_item = OrderItem(
+            order_id=order.id,
+            menu_item_id=item.id,
+            quantity=qty,
+            price=item.price,
+            status="open",
+            notes=note,
+        )
+
+        db.session.add(order_item) 
+        total += item.price * qty
 
     order.total = total
     db.session.commit()
@@ -253,6 +269,8 @@ def create_whatsapp_message(order: Order):
     for item in order.items:
         subtotal = item.quantity * item.price
         lines.append(f"{item.menu_item.name} x{item.quantity} - Rp {subtotal:,.0f}".replace(",", "."))
+        if item.notes:
+            lines.append(f"Catatan: {item.notes}")
 
     lines.append("──────────────────────")
     lines.append(f" *Total:* Rp {order.total:,.0f}".replace(",", "."))

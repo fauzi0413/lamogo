@@ -8,7 +8,14 @@
     <!-- Form update cart -->
     <form method="post" action="{{ url_for('cashier.update_cart') }}">
       <table>
-        <tr><th>Menu</th><th>Harga</th><th>Jumlah</th><th>Total</th><th>Aksi</th></tr>
+        <tr>
+          <th>Menu</th>
+          <th>Harga</th>
+          <th>Jumlah</th>
+          <th>Catatan</th>
+          <th>Total</th>
+          <th>Aksi</th>
+        </tr>
         {% for item in items %}
           <tr>
             <td>{{ item.name }}</td>
@@ -20,6 +27,13 @@
                     min="1"
                     class="qty-input"
                     data-original="{{ item.qty }}">
+            </td>
+            <td>
+              <input type="text" 
+                    name="note_{{ item.id }}" 
+                    class="form-control note-input"
+                    placeholder="Tambahkan catatan..."
+                    value="{{ item.note or '' }}">
             </td>
             <td>{{ (item.price * item.qty)|rupiah }}</td>
             <td>
@@ -235,6 +249,19 @@
       checkoutForm.submit();
     });
 
+    // === Simpan Catatan Tiap Item ke localStorage ===
+    document.querySelectorAll(".note-input").forEach(input => {
+      const key = `note_${input.name}`;
+      const saved = localStorage.getItem(key);
+      if (saved !== null) {
+        input.value = saved; // isi ulang ke form sebelum dikirim
+      }
+
+      input.addEventListener("input", () => {
+        localStorage.setItem(key, input.value);
+      });
+    });
+    
     // --- 🗂️ Simpan & muat data nama/no HP ---
     const nameInput = document.querySelector("input[name='customer_name']");
     const phoneInput = document.querySelector("input[name='customer_phone']");
